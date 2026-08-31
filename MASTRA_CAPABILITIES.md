@@ -15,14 +15,14 @@ This file is the compatibility inventory for Mastra Evolution. Re-check it when 
 | `memoryExtractors` | Present | `Extractor` on `observationalMemory.observation.extract` / `reflection.extract` | Schema-backed extractors run a follow-up structured-output call. `onExtracted` fires after parse, before persist. Stream chunks: `data-om-observation-end`, `data-om-buffering-end`. Extractors run on observe/reflect cycles, not every user turn. |
 | `skills` | Present | Agent `skills`, `createSkill()`, workspace `skills` paths, `SKILL.md` | Follows the Agent Skills specification. Do not invent a parallel format. |
 | `skillSearch` | Present | `SkillSearchProcessor` from `@mastra/core/processors`; workspace `bm25` / vector / hybrid | Meta-tools `search_skills` and `load_skill`. Eager alternative is `SkillsProcessor`. |
-| `versionedSkills` | Present | `VersionedSkillSource`, `CompositeVersionedSkillSource`, storage `mastra_skills` / `mastra_skill_versions` / `mastra_skill_blobs` | Publish through Mastra skill storage + blob store. FGA covers `/stored/skills`. |
+| `versionedSkills` | Present | `VersionedSkillSource`, `CompositeVersionedSkillSource`, storage `mastra_skills` / `mastra_skill_versions` / `mastra_skill_blobs` | Filesystem `SKILL.md` writes update local skills. Versioned publish is the stored-skills draft-to-publish / BlobStore path (`stored-skills:publish`). Use `SkillSearchProcessor` `blockingRefresh: true` for same-turn discovery. |
 | `feedback` | Present | Observability feedback records linked to traces/spans (`mastra.observability.addFeedback` in docs) | Use as an evidence source. Do not store a second feedback model. |
 | `datasets` | Present | `mastra.datasets`; version bumps on every item mutation | Production failures become dataset items. Pin experiments to a dataset version. |
-| `experiments` | Present | `dataset.startExperiment()`, `runEvals` | One target per experiment. Baseline vs candidate is two runs on the same pinned dataset. Memory-enabled agents need an inline `task` that passes `{ threadId, resourceId }`. |
+| `experiments` | Present | `dataset.startExperiment()`, `runEvals`, `mastra.datasets.compareExperiments()` | One target per experiment. Baseline vs candidate is two runs plus `compareExperiments()`. Memory-enabled agents need an inline `task` that passes `{ threadId, resourceId }`. Candidate skill sets are Agent/workspace config. Programmatic cases use `addItem()`; Studio can save scored traces. |
 | `toolHooks` | Present | Agent `hooks.beforeToolCall` / `hooks.afterToolCall` | Applies to assigned, memory, workspace, agent, and workflow tools. |
 | `dynamicWorkflows` | Present | Stored JSON workflow definitions; `addDynamicWorkflow` / client `upsertDynamicWorkflow` | Later evolution target (v0.4). Requires `stored-workflows:write`. |
-| `fineGrainedAuthorization` | Present | `server.fga`, `IFGAProvider` | Consume Mastra identity/resource context. Do not invent a parallel authz model. |
-| processors | Present | Input/output processors; `processInputStep`; `processLLMRequest` | Attach Evolution as processors/hooks. Do not subclass `Agent`. |
+| `fineGrainedAuthorization` | Present | `server.fga`, `IFGAProvider` | Consume Mastra identity/resource context. Do not invent a parallel authz model. Production FGA is Mastra Enterprise Edition. |
+| processors | Present | `inputProcessors` / `outputProcessors` on `generate`/`stream`; `processInputStep`; `processLLMRequest` | Per-call processor arrays replace Agent defaults. Per-call hooks merge by key. No documented additive post-construction processor setter. |
 | A2A | Present | Mastra A2A server/client | Transport-agnostic learning: consume thread/resource/trace context, not A2A frames. |
 | observability / OTel | Present | Mastra tracing, logs, metrics, `OtelBridge` (experimental) | Emit `evolution.*` spans alongside Mastra traces. |
 | workspace / sandbox | Present | `Workspace`, `LocalFilesystem`, mounts, FUSE for remote sandboxes | Local hobby path: `LocalFilesystem`. Cloud artifacts: blob store, not a FUSE-mounted SQLite file. |
@@ -44,11 +44,12 @@ This file is the compatibility inventory for Mastra Evolution. Re-check it when 
 
 ## Adapter implications
 
-1. Primary learning ingress is `Extractor.onExtracted`, with fallbacks from tool hooks and observability feedback when extractors are absent or fire too rarely.
-2. Skill publication should write Mastra-compatible `SKILL.md` trees and register them via workspace `skillSource` / versioned skill storage so `SkillSearchProcessor` can discover them.
-3. Candidate evaluation must create or append Mastra dataset items, pin a dataset version, and run two experiments (baseline agent vs candidate skill set). For observational-memory agents, use an inline experiment `task` and pre-create threads.
+1. Primary learning ingress is `Extractor.onExtracted`, with fallbacks from tool hooks and observability feedback when extractors are absent or fire too rarely. Source has `Extractor` `mode: 'hook'`; published docs do not yet document that mode.
+2. Hobby skill updates write `SKILL.md` on the workspace filesystem. Versioned publication uses Mastra stored-skills draft-to-publish / blob versions, not that write.
+3. Candidate evaluation must `addItem()` (no documented trace-id converter), pin a dataset version, run two experiments, then `compareExperiments()`. For observational-memory agents, use an inline experiment `task` and pre-create threads.
 4. Isolate every Mastra import in `@mastra-evolution/mastra`. Probe capabilities at runtime; degrade as RFC.md section 25 describes.
 5. Do not put transactional Evolution state on a Cloud Storage FUSE mount.
+6. Attach via construction-time composition when the app owns the Agent factory; otherwise use call-time `generate`/`stream` options and do not treat processor arrays as additive.
 
 ## Re-verification checklist
 

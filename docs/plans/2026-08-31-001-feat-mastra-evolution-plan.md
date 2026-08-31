@@ -225,10 +225,10 @@ Product Contract unchanged in meaning. RFC Q1–Q7 mapped to KD5–KD10.
 ### Key Technical Decisions
 
 - KTD1. Package map follows `RFC.md` §11: `core`, `learning`, `improvement`, `mastra`, `presets`, `storage-local`, `storage-postgres`, `testing`. Retire `@typescript-template/common` after the new packages compile. Governs R3, R4.
-- KTD2. Attach with `createMastraEvolution({ agent, learning, improvement })` that returns processors, extractors, and hooks to register on the existing agent. Do not wrap `new Agent`. Cites KD1. Governs R1.
+- KTD2. Attach without subclassing. Prefer composing extractors, `inputProcessors`, `outputProcessors`, and `hooks` at Agent construction when the app owns the factory. For an already-built Agent, pass call-time `hooks` and processor arrays on `generate`/`stream`. Per-call processor arrays replace the Agent defaults; per-call hooks merge by key. Cites KD1. Governs R1.
 - KTD3. Primary learning ingress is `Extractor.onExtracted` on Observational Memory. Secondary ingress is agent `hooks.afterToolCall` and observability feedback. Extractors fire on observe/reflect cycles, not every turn; presets may lower OM `messageTokens` / enable `bufferOnIdle` for denser signals. Governs R5, R23.
-- KTD4. Publish skills as Agent Skills `SKILL.md` trees through Mastra workspace `skillSource` (`CompositeVersionedSkillSource` when blobs exist; `LocalFilesystem` for hobby). Provenance lives in Evolution state and in skill metadata without breaking the spec. Cites KD7. Governs R8.
-- KTD5. Baseline vs candidate evaluation is two Mastra experiments on one pinned dataset version. Memory-enabled agents use an inline experiment `task` that passes `{ threadId, resourceId }` and pre-creates threads (`MASTRA_CAPABILITIES.md`). Governs R14.
+- KTD4. Hobby path writes Agent Skills `SKILL.md` under the workspace filesystem and sets `SkillSearchProcessor` `blockingRefresh: true` so the new skill is searchable in the same turn. Enterprise publish uses Mastra stored-skills draft-to-publish / blob versions (`CompositeVersionedSkillSource`), not a filesystem overwrite. Writing a local file is not a versioned publish. Loaded skill instructions may stay in thread state until reload or TTL. Cites KD7. Governs R8.
+- KTD5. Baseline vs candidate is two `startExperiment` runs on one pinned dataset version, then `compareExperiments()`. Memory-enabled agents use an inline experiment `task` that passes `{ threadId, resourceId }` and pre-creates threads. Candidate skill sets are Agent/workspace configuration, not an experiment option. Programmatic regression cases use `dataset.addItem()`; there is no documented trace-id-to-item API. Governs R14.
 - KTD6. `storage-local` uses a local LibSQL/filesystem Evolution store for single-writer hobby use. `storage-postgres` is the multi-instance transactional store. Artifact bytes go to Mastra skill blobs or object storage, never a FUSE SQLite file. Cites KD10. Governs R19, R18.
 - KTD7. Capability probing lives only in `@mastra-evolution/mastra`. Core talks ports. Missing optional capabilities degrade per R23 rather than crashing attach. Governs R23.
 - KTD8. Domain tests use `@mastra-evolution/testing` fakes (in-memory store, recording publisher, scripted evaluator). Do not mock Mastra internals in unit tests. Adapter tests may use a pinned Mastra version in CI.
@@ -374,7 +374,7 @@ Phase 0: U1–U3. Phase 1: U4–U5. Phase 2: U6. Phase 3: U7–U9. Phase 4: U10�
 - **Approach:**
   1. Spike Observational Memory `Extractor`, `SkillSearchProcessor`, datasets/experiments, agent `hooks`, and workspace skill publication against the current `@mastra/*` pair.
   2. Implement `MastraCapabilities` from `RFC.md` §25 via feature detection (duck-typing exports / runtime probes), not hardcoded version strings in domain code.
-  3. `createMastraEvolution` returns `{ extractors, processors, hooks, register(agent) }` without subclassing `Agent`.
+  3. `createMastraEvolution` returns `{ extractors, processors, hooks, applyToCall(options) }` without subclassing `Agent`. `register` may only mutate Agent construction inputs the caller still owns. Do not assume a post-construction additive processor setter exists.
   4. Write peerDependency range into `packages/mastra/package.json` and update `MASTRA_CAPABILITIES.md`.
 - **Execution note:** Spike first. Delete spike-only files before the unit is done.
 - **Patterns to follow:** Official attach style in https://mastra.ai/docs/agents/processors and https://mastra.ai/blog/introducing-memory-extractors
@@ -414,12 +414,13 @@ Phase 0: U1–U3. Phase 1: U4–U5. Phase 2: U6. Phase 3: U7–U9. Phase 4: U10�
 - **Requirements:** R8, R17
 - **Dependencies:** U5
 - **Files:** `packages/learning/src/**`, `packages/mastra/src/**` skill publisher, `packages/mastra/src/*.test.ts`
-- **Approach:** Generate Agent Skills compatible `SKILL.md`. Static-validate name/description/instructions (`createSkill` rules). Hobby path writes under workspace skills directory. Do not auto-publish until U8 unless a test preset forces L4 with a stub evaluator.
+- **Approach:** Generate Agent Skills compatible `SKILL.md`. Static-validate name/description/instructions (`createSkill` rules). Hobby path writes under the workspace skills directory and refreshes search with `blockingRefresh: true`. Versioned publish (U8/U11) uses stored-skills draft-to-publish, not that file write. Do not auto-publish until U8 unless a test preset forces L4 with a stub evaluator.
 - **Patterns to follow:** https://mastra.ai/docs/skills and `CompositeVersionedSkillSource` docs.
 - **Test scenarios:**
   - Procedural accepted lesson produces a draft skill artifact that parses as SKILL.md with required frontmatter.
   - Non-procedural fact lesson does not create a skill.
   - Invalid skill name fails static validation and stays draft/rejected.
+  - Publisher exposes distinct `writeDraft` vs `publishVersion` operations; a local `SKILL.md` write does not create a stored skill version.
 - **Verification:** Skill publisher tests pass. No organization publish in default learning-only config.
 
 ### U7. Production cases as datasets and candidate evaluation
@@ -431,7 +432,7 @@ Phase 0: U1–U3. Phase 1: U4–U5. Phase 2: U6. Phase 3: U7–U9. Phase 4: U10�
 - **Approach:**
   1. From accepted failure/correction lessons, add dataset items through Mastra datasets (version bump is Mastra's).
   2. Build an `ImprovementProposal` targeting `{ type: "skill" }`.
-  3. Evaluator port: two `startExperiment` / `runEvals` runs. Inline `task` supplies memory ids (KTD5).
+  3. Evaluator port: two `startExperiment` / `runEvals` runs, then `compareExperiments()`. Inline `task` supplies memory ids. Candidate skills are applied by configuring the candidate Agent/workspace (KTD5).
   4. Record scores, regressions, verdict pass/fail/inconclusive on the proposal.
 - **Test scenarios:**
   - Covers AE5: scripted evaluator fail → proposal status rejected, publisher not called.
@@ -543,7 +544,7 @@ Do not require a live paid model in default `pnpm test`. Adapter tests that need
 - Replaces template identity (`typescript-template` / `packages/common`) with a multi-package library.
 - Adds peer dependency on Mastra for the adapter package only.
 - CI grows a compatibility matrix. Hobby users are unaffected if they do not install postgres/presets.
-- Authorization remains Mastra FGA. Evolution must thread `requestContext` / resource ids on every store write.
+- Authorization remains Mastra's. Evolution must thread `requestContext` / resource ids on every store write. Production FGA is Mastra Enterprise Edition; OSS/hobby presets must not require it.
 - Observability: additional spans. Do not disable Mastra tracing.
 
 ---
