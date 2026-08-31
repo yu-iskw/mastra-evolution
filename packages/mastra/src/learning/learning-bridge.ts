@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto';
 
 import { isPlainObject as isRecord, stringField } from '@mastra-evolution/core';
 
-import type { LearningLike, MastraExtractorFragment } from './types';
+import type { LearningLike, MastraExtractorFragment } from '../types';
 import type { Evidence, EvidenceKind, EvolutionScope } from '@mastra-evolution/core';
 
 const EVIDENCE_KINDS: readonly EvidenceKind[] = [
@@ -248,9 +248,7 @@ function nestedRecord(record: Record<string, unknown>): Record<string, unknown> 
   return {};
 }
 
-function isLearningRuntime(
-  value: unknown,
-): value is { ingest?: LearningLike['ingest']; ingestSignal?: LearningLike['ingestSignal'] } {
+export function isLearningRuntime(value: unknown): value is LearningLike {
   if (!isRecord(value)) {
     return false;
   }

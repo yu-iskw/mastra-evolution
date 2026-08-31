@@ -2,16 +2,20 @@
   "name": "@mastra-evolution/example-local-learning",
   "version": "0.1.0",
   "private": true,
-  "description": "Plug Evolution learning-only into an existing Mastra agent with a local store.",
+  "description": "Hono HTTP server: plug Evolution learning-only into a Mastra agent with a local store.",
   "license": "Apache-2.0",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "tsc",
-    "start": "node dist/index.js"
+    "start": "node dist/index.js",
+    "demo": "node dist/demo.js"
   },
   "dependencies": {
+    "@hono/node-server": "2.1.1",
     "@mastra-evolution/mastra": "workspace:*",
-    "@mastra/core": "1.63.2"
+    "@mastra/core": "1.63.2",
+    "@mastra/hono": "1.7.5",
+    "hono": "4.13.4"
   }
 }

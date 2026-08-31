@@ -1,23 +1,20 @@
-import path from 'node:path';
-
-import { FilesystemSkillPublisher } from '@mastra-evolution/mastra';
+import { FilesystemSkillPublisher, learnedSkillsUnderStore } from '@mastra-evolution/mastra';
 import { LocalEvolutionStore } from '@mastra-evolution/storage-local';
 
-import { HOBBY_SKILL_AUTONOMY } from './autonomy-defaults';
-import { createPresetEvolution, createPresetImprovement } from './create-preset-evolution';
-import { createPresetLearning } from './create-preset-learning';
+import { HOBBY_SKILL_AUTONOMY } from './shared/autonomy-defaults';
+import { createPresetEvolution, createPresetImprovement } from './shared/create-preset-evolution';
+import { createPresetLearning } from './shared/create-preset-learning';
 
-import type { SharedImprovementPresetOptions } from './types';
+import type { SharedImprovementPresetOptions } from './shared/types';
 import type { AutonomyLevel, AutonomyName } from '@mastra-evolution/core';
 import type { ImprovementRuntime } from '@mastra-evolution/improvement';
 import type { LearningRuntime } from '@mastra-evolution/learning';
 import type { MastraEvolution } from '@mastra-evolution/mastra';
 
-const DEFAULT_SKILLS_DIR = 'skills';
-
 export interface LocalEvolutionPresetOptions extends SharedImprovementPresetOptions {
   directory: string;
-  skillsDirectory?: string;
+  /** Override publish directory (defaults to `{directory}/skills`). */
+  learnedSkillsDirectory?: string;
 }
 
 export interface LocalEvolutionPreset {
@@ -33,7 +30,7 @@ export function localEvolutionPreset(options: LocalEvolutionPresetOptions): Loca
   const store = new LocalEvolutionStore({ directory: options.directory });
   const learning = createPresetLearning(store, options);
   const publisher = new FilesystemSkillPublisher({
-    directory: options.skillsDirectory ?? path.join(options.directory, DEFAULT_SKILLS_DIR),
+    directory: options.learnedSkillsDirectory ?? learnedSkillsUnderStore(options.directory),
   });
   const autonomy = options.autonomy ?? HOBBY_SKILL_AUTONOMY;
   const improvement = createPresetImprovement(store, options, {

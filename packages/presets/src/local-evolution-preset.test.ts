@@ -46,7 +46,7 @@ describe('localEvolutionPreset', () => {
       directory: await uniqueTempDir(),
       agentId: AGENT_ID,
       evaluator,
-      skillsDirectory: path.join(await uniqueTempDir(), 'custom-skills'),
+      learnedSkillsDirectory: path.join(await uniqueTempDir(), 'custom-skills'),
     });
     expect(preset.store).toBeInstanceOf(LocalEvolutionStore);
     expect(preset.publisher).toBeInstanceOf(FilesystemSkillPublisher);

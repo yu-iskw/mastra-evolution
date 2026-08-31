@@ -6,6 +6,8 @@ packages:
 # https://pnpm.io/blog/releases/11.0
 # https://socket.dev/blog/pnpm-11-adds-new-supply-chain-protection-defaults
 minimumReleaseAge: 10080 # 7 days * 1440 min
+# @mastra/server packuments sometimes lack `time` in abbreviated metadata.
+minimumReleaseAgeIgnoreMissingTime: true
 blockExoticSubdeps: true # explicit; matches v11 default
 
 # Optional @mastra/core peers are not mature under the 7-day gate; do not auto-install them.
@@ -19,9 +21,13 @@ allowBuilds:
 
 # Migrated from package.json#pnpm (pnpm 11 no longer reads that field)
 # Allow urgent patched versions blocked by the 7-day quarantine.
+# `@mastra/server` metadata omits `time`, which fails pnpm 11 minimumReleaseAge
+# (ERR_PNPM_MISSING_TIME) when adding `@mastra/hono`.
 minimumReleaseAgeExclude:
   - brace-expansion@5.0.9
   - nanoid@3.3.18
+  - '@mastra/hono'
+  - '@mastra/server'
 
 overrides:
   # GHSA-r292-9mhp-454m fixed in 7.5.21+

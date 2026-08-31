@@ -2,11 +2,11 @@ import path from 'node:path';
 
 import { LocalEvolutionStore } from '@mastra-evolution/storage-local';
 
-import { LEARN_AUTONOMY } from './autonomy-defaults';
-import { createPresetEvolution } from './create-preset-evolution';
-import { createPresetLearning } from './create-preset-learning';
+import { LEARN_AUTONOMY } from './shared/autonomy-defaults';
+import { createPresetEvolution } from './shared/create-preset-evolution';
+import { createPresetLearning } from './shared/create-preset-learning';
 
-import type { SharedPresetOptions } from './types';
+import type { SharedPresetOptions } from './shared/types';
 import type { LearningRuntime } from '@mastra-evolution/learning';
 import type { MastraEvolution } from '@mastra-evolution/mastra';
 

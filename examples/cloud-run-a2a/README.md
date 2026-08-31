@@ -1,14 +1,18 @@
 # Cloud Run + A2A example
 
-Typechecked wiring for Mastra Evolution on Cloud Run. Instances share **PostgreSQL** for Evolution state and an **object bucket** for skill artifacts. A2A is the client transport; Evolution stays transport-agnostic.
+Hono HTTP server for Mastra Evolution on Cloud Run. Instances share **PostgreSQL** for Evolution state and an **object bucket** for skill artifacts. A2A is the client transport; Evolution stays transport-agnostic.
 
-This example does **not** open a real database. `src/index.ts` uses a `SqlExecutor` stub so it compiles without `pg` or `@mastra/core`. Without `DATABASE_URL`, `main()` prints a skip message and returns.
+Construction lives in `src/create-cloud-run-stack.ts`. `src/index.ts` only starts the server. Mastra registers `/api/agents/*`, agent cards, and `/api/a2a/:agentId`; Evolution hooks stay on the workspace.
+
+This example does **not** open a real database. The stack uses a `SqlExecutor` stub so it compiles without `pg`. Without `DATABASE_URL`, `main()` prints a skip message and returns (so default `pnpm start` exits). With `DATABASE_URL` set, it listens on `0.0.0.0` (`PORT`, default `8080`).
 
 ## What it wires
 
-- An existing agent stand-in, then `createMastraEvolution({ agent, store, learning: true, improvement: { autonomy: 'validate', experimentsAvailable: false } })`
-- PostgreSQL `EvolutionStore` (no hobby `.evolution/` filesystem)
-- `applyToCall` remains available as an escape hatch; the default plug still needs `agent.workspace` with `setToolsConfig` for workspace tools
+- `createCloudRunStack()` — `Workspace` (dual skill roots: curated `skills/` + learned `.evolution/skills`) + `Agent` + Postgres `EvolutionStore` + `createMastraEvolution({ agent, workspace, store, learning: true, improvement: { autonomy: 'validate', experimentsAvailable: false } })` + `new Mastra({ agents })`
+- Hono `MastraServer({ app, mastra }).init()` — agent HTTP routes and A2A on the same process
+- `applyToCall` remains available as an escape hatch; workspace `tools.hooks` are merged by the factory for Studio and A2A turns
+
+Mastra `Agent` does not expose a sync `workspace` field, so the factory also takes the Workspace instance.
 
 ## Architecture
 
@@ -50,17 +54,27 @@ See [Cloud Storage volume mounts](https://docs.cloud.google.com/run/docs/configu
 
 Copy `env.example` and set at least:
 
-| Variable                    | Purpose                                                                 |
-| --------------------------- | ----------------------------------------------------------------------- |
-| `DATABASE_URL`              | PostgreSQL URL for Evolution state. Skip runtime connection when unset. |
-| `ARTIFACT_BUCKET`           | Object bucket for skill artifacts                                       |
-| `MASTRA_CLOUD_ACCESS_TOKEN` | Mastra Cloud / API token when used                                      |
-| `MASTRA_AGENTS_BASE_URL`    | Agent HTTP/A2A base URL                                                 |
-| `MASTRA_A2A_PATH`           | A2A path (default `/a2a` in the example file)                           |
+| Variable                    | Purpose                                                     |
+| --------------------------- | ----------------------------------------------------------- |
+| `DATABASE_URL`              | PostgreSQL URL for Evolution state. Skip listen when unset. |
+| `PORT`                      | HTTP port (default `8080`, Cloud Run convention)            |
+| `ARTIFACT_BUCKET`           | Object bucket for skill artifacts                           |
+| `WORKSPACE_DIR`             | Workspace filesystem root (default `.workspace`)            |
+| `MASTRA_CLOUD_ACCESS_TOKEN` | Mastra Cloud / API token when used                          |
+| `MASTRA_AGENTS_BASE_URL`    | Agent HTTP/A2A base URL                                     |
+| `MASTRA_A2A_PATH`           | A2A path (default `/a2a` in the example file)               |
 
-## Run (compile)
+## Run
 
 ```bash
 pnpm --filter @mastra-evolution/example-cloud-run-a2a build
 pnpm --filter @mastra-evolution/example-cloud-run-a2a start
+```
+
+With `DATABASE_URL` set:
+
+```bash
+curl http://localhost:8080/health
+curl http://localhost:8080/api/agents
+curl http://localhost:8080/api/.well-known/analytics-agent/agent-card.json
 ```

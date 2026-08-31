@@ -4,17 +4,27 @@ export {
   createEvolutionExtractor,
   EVOLUTION_EXTRACTOR_INSTRUCTIONS,
   EVOLUTION_EXTRACTOR_NAME,
-} from './create-evolution-extractor';
-export { createBoundedSkillEvaluator } from './create-bounded-skill-evaluator';
-export { createMastraEvaluator } from './create-mastra-evaluator';
+} from './learning/create-evolution-extractor';
+export { createBoundedSkillEvaluator } from './evaluate/create-bounded-skill-evaluator';
+export { createMastraEvaluator } from './evaluate/create-mastra-evaluator';
 export { createMastraEvolution } from './create-mastra-evolution';
-export { FilesystemSkillPublisher } from './filesystem-skill-publisher';
-export { probeCapabilities } from './probe-capabilities';
+export { FilesystemSkillPublisher } from './skills/filesystem-skill-publisher';
+export { probeCapabilities } from './capabilities/probe-capabilities';
+export {
+  inspectWorkspace,
+  LEARNED_SKILLS_DISCOVERY_HINT,
+  learnedSkillsUnderStore,
+  MISSING_WORKSPACE_ERROR,
+  resolveEvolutionWorkspaceLayout,
+  workspaceCanLoadLearnedSkills,
+} from './attach/workspace-bind';
 
-export type { EvolutionExtractor } from './create-evolution-extractor';
+export type { EvolutionWorkspaceLayout, WorkspaceBind } from './attach/workspace-bind';
+
+export type { EvolutionExtractor } from './learning/create-evolution-extractor';
 export type { CreateImprovementOptions, ImprovementRuntime } from '@mastra-evolution/improvement';
 export type { CreateLearningOptions, LearningRuntime } from '@mastra-evolution/learning';
-export type { CreateMastraEvaluatorOptions } from './create-mastra-evaluator';
+export type { CreateMastraEvaluatorOptions } from './evaluate/create-mastra-evaluator';
 export type {
   CreateMastraEvolutionOptions,
   ImprovementConfig,

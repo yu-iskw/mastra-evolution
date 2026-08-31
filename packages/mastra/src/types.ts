@@ -40,7 +40,8 @@ export interface LearningLike {
 }
 
 export interface ImprovementLike {
-  proposeFromLesson?(lesson: Lesson, artifact?: unknown): Promise<unknown>;
+  proposeFromLesson(lesson: Lesson, artifact?: unknown): Promise<unknown>;
+  promote(proposalId: string): Promise<unknown>;
 }
 
 export interface LearningConfig {
@@ -64,12 +65,13 @@ export interface ImprovementConfig {
 export interface CreateMastraEvolutionOptions {
   /**
    * Existing Mastra Agent (or duck-type with `id`/`name` and optional `workspace`).
-   * Workspace is inferred from `agent.workspace` unless `workspace` is passed.
+   * Real Mastra Agents keep workspace private — pass `workspace` as well.
+   * Duck-typed `agent.workspace` is still read when `workspace` is omitted.
    */
   agent?: unknown;
   /**
-   * Stand-in Workspace when the agent has none (tests). Ignored when you only
-   * need `applyToCall` with a learning runtime. Wins over `agent.workspace`.
+   * Workspace to bind hooks and hobby store/skills paths.
+   * Required for a real Mastra Agent. Wins over duck-typed `agent.workspace`.
    */
   workspace?: unknown;
   learning?: boolean | LearningLike | LearningConfig;
@@ -101,7 +103,7 @@ export interface MastraEvolution {
   applyToCall<T extends Record<string, unknown> = Record<string, unknown>>(callOptions?: T): T;
   /**
    * Returns the same agent identity (`Object.is`). Does not wrap or subclass.
-   * Prefer `createMastraEvolution({ agent })`, which plugs workspace hooks.
+   * Prefer `createMastraEvolution({ agent, workspace })`, which plugs workspace hooks.
    */
   register<T>(agent: T): T;
   /**

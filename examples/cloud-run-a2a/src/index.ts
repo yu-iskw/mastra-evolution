@@ -1,62 +1,60 @@
-import { CLOUD_STORAGE_FUSE_WARNING, createMastraEvolution } from '@mastra-evolution/presets';
-import { PostgresEvolutionStore } from '@mastra-evolution/storage-postgres';
+import { serve } from '@hono/node-server';
+import { HonoBindings, HonoVariables, MastraServer } from '@mastra/hono';
+import { CLOUD_STORAGE_FUSE_WARNING } from '@mastra-evolution/presets';
+import { Hono } from 'hono';
+import { cors } from 'hono/cors';
 
-import type { EvolutionStore } from '@mastra-evolution/core';
-import type { MastraEvolution } from '@mastra-evolution/mastra';
-import type { SqlExecutor } from '@mastra-evolution/storage-postgres';
+import { AGENT_ID, createCloudRunStack } from './create-cloud-run-stack';
+import { a2aBaseUrl, a2aPath, artifactBucket, hasDatabaseUrl, listenPort } from './env';
+
+type AppEnv = { Bindings: HonoBindings; Variables: HonoVariables };
 
 /**
- * Cloud Run + A2A wiring (typecheck only).
+ * Hono HTTP / A2A server. Mastra registers agent cards and `/api/a2a/:agentId`.
+ * Evolution stays on the Agent/Workspace, not the transport.
  *
- * A2A is Mastra's transport. Evolution is transport-agnostic: consume
- * thread/resource/trace context from the agent request, not A2A frames.
- * Multiple Cloud Run instances share PostgreSQL for Evolution state and an
- * object bucket for skill artifacts. Optimistic concurrency on proposal
- * version (`VersionConflictError`) serializes skill publication.
- *
- * Do not use Cloud Storage FUSE as a SQLite/LibSQL database.
+ * Skip listen when DATABASE_URL is unset so default `pnpm start` still exits.
  */
 async function main(): Promise<void> {
-  const agent = { name: 'analytics-agent' };
-  const sql = createSqlExecutorStub();
-  const store: EvolutionStore = new PostgresEvolutionStore({ sql });
-  const evolution: MastraEvolution = createMastraEvolution({
-    agent,
-    store,
-    learning: true,
-    improvement: { autonomy: 'validate', experimentsAvailable: false },
-  });
-
-  if (!readEnv('DATABASE_URL')) {
-    console.log('skip: DATABASE_URL is not set; not connecting to PostgreSQL');
+  const stack = createCloudRunStack();
+  if (!hasDatabaseUrl()) {
+    console.log('skip: DATABASE_URL is not set; not listening');
     console.log(CLOUD_STORAGE_FUSE_WARNING);
     return;
   }
 
-  console.log(
-    `Evolution Cloud Run wiring ready for ${agent.name}. Artifact bucket: ${readEnv('ARTIFACT_BUCKET') ?? '(unset)'}`,
+  const app = new Hono<AppEnv>();
+  app.use('*', cors());
+  app.get('/health', (context) =>
+    context.json({
+      status: 'ok',
+      agentId: AGENT_ID,
+      artifactBucket: artifactBucket(),
+      workspaceDir: stack.workspaceDir,
+      applyToCall: typeof stack.evolution.applyToCall,
+    }),
   );
-  console.log(`applyToCall escape hatch: ${typeof evolution.applyToCall}`);
-}
 
-/** In-memory no-op executor so this example typechecks without a database driver. */
-function createSqlExecutorStub(): SqlExecutor {
-  return {
-    query: async <T = Record<string, unknown>>(
-      _sql: string,
-      _params?: readonly unknown[],
-    ): Promise<T[]> => {
-      return [];
-    },
-    execute: async (_sql: string, _params?: readonly unknown[]): Promise<void> => {
-      return;
-    },
-  };
-}
+  const server = new MastraServer({
+    app,
+    mastra: stack.mastra,
+    openapiPath: '/openapi.json',
+  });
+  await server.init();
 
-function readEnv(name: string): string | undefined {
-  const proc = (globalThis as { process?: { env?: Record<string, string | undefined> } }).process;
-  return proc?.env?.[name];
+  const port = listenPort();
+  serve({ fetch: app.fetch, port, hostname: '0.0.0.0' }, (info) => {
+    const origin = `http://0.0.0.0:${info.port}`;
+    console.log(`cloud-run-a2a: ${origin} agent=${AGENT_ID} bucket=${artifactBucket()}`);
+    console.log(`health:     GET  ${origin}/health`);
+    console.log(`agents:     GET  ${origin}/api/agents`);
+    console.log(`generate:   POST ${origin}/api/agents/${AGENT_ID}/generate`);
+    console.log(`a2a card:   GET  ${origin}/api/.well-known/${AGENT_ID}/agent-card.json`);
+    console.log(`a2a exec:   POST ${origin}/api/a2a/${AGENT_ID}`);
+    console.log(`openapi:    GET  ${origin}/openapi.json`);
+    console.log(`A2A env:    base=${a2aBaseUrl()} path=${a2aPath()}`);
+    console.log(CLOUD_STORAGE_FUSE_WARNING);
+  });
 }
 
 void main().catch((error: unknown) => {

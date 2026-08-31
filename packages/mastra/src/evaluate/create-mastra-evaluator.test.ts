@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
+import { createMastraEvolution } from '../create-mastra-evolution';
+
 import { createMastraEvaluator, EXPERIMENTS_UNAVAILABLE_ERROR } from './create-mastra-evaluator';
-import { createMastraEvolution } from './create-mastra-evolution';
 
 import type { ImprovementProposal } from '@mastra-evolution/core';
 

@@ -1,4 +1,4 @@
-import { parseAutonomy, slugSkillName } from '@mastra-evolution/core';
+import { isOrganizationScope, parseAutonomy, slugSkillName } from '@mastra-evolution/core';
 
 import {
   defaultEnterprisePromotionPolicy,
@@ -186,7 +186,9 @@ async function promoteProposal(
       ? await evaluateProposal(deps, proposalId, {})
       : { ...proposal, evaluation: proposal.evaluation };
   const { evaluation } = evaluated;
-  const independentSourceCount = await countIndependentSources(deps.store, evaluated);
+  const independentSourceCount = isOrganizationScope(evaluated.scope)
+    ? await countIndependentSources(deps.store, evaluated)
+    : 0;
   const decision = await deps.policy.decide(evaluated, evaluation, {
     autonomy: deps.autonomy,
     independentSourceCount,
@@ -281,7 +283,7 @@ async function publishApproved(
     return approved;
   }
 
-  if (typeof deps.publisher.writeDraft === 'function') {
+  if (deps.publisher.writeDraft) {
     await deps.publisher.writeDraft(approved);
   }
   const publishedRevision = await deps.publisher.publish(approved);

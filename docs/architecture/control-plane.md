@@ -1,6 +1,6 @@
 # Evolution control plane vs Mastra runtime
 
-Mastra Evolution is the **control plane** for evidence-driven learning and improvement. Mastra remains the **runtime** that executes agents. Product behavior lives in [`RFC.md`](../../RFC.md); this note records the split implementers should preserve.
+Mastra Evolution is the **control plane** for evidence-driven learning and improvement. Mastra remains the **runtime** that executes agents. This note records the split implementers should preserve.
 
 ## Control plane (Evolution)
 
@@ -12,7 +12,7 @@ Evolution owns the durable loop:
 4. Evaluate candidates against policy.
 5. Promote or reject, with rollback metadata.
 
-Domain types and ports live in `@mastra-evolution/core`. Learning and improvement are independently enableable (`RFC.md` P2 / plan KD2). Core does not import Mastra APIs.
+Domain types and ports live in `@mastra-evolution/core`. Learning and improvement are independently enableable. Core does not import Mastra APIs.
 
 ```mermaid
 flowchart LR
@@ -74,8 +74,8 @@ flowchart TB
   Agent --> OBS
 ```
 
-Attach via `createMastraEvolution({ agent, learning: true })`. The factory infers `agent.workspace` and merges workspace `tools.hooks` so Studio and A2A turns still ingest without `applyToCall`. `register` returns the same instance (`Object.is`); there is no `SelfImprovingAgent`.
+Attach via `createMastraEvolution({ agent, workspace, learning: true })`. Pass `workspace` for a real Mastra Agent (no sync `agent.workspace` field). The factory merges workspace `tools.hooks` so Studio and A2A turns still ingest without `applyToCall`. `register` returns the same instance (`Object.is`); there is no `SelfImprovingAgent`.
 
 ## Adapter boundary
 
-`@mastra-evolution/mastra` is the only package that should know Mastra APIs. It probes capabilities and degrades (missing extractors fall back to hooks; missing experiments leave proposals unpublished or require an external evaluator). When Mastra gains a native primitive that overlaps Evolution, adapt to Mastra and deprecate the overlap (`RFC.md` Risk 6).
+`@mastra-evolution/mastra` is the only package that should know Mastra APIs. It probes capabilities and degrades (missing extractors fall back to hooks; missing experiments leave proposals unpublished or require an external evaluator). When Mastra gains a native primitive that overlaps Evolution, adapt to Mastra and deprecate the overlap.

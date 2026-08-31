@@ -5,15 +5,17 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 
 import { CapabilityError } from '@mastra-evolution/core';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { createMastraEvolution } from './create-mastra-evolution';
-import { probeCapabilities } from './probe-capabilities';
 import {
   inspectWorkspace,
+  LEARNED_SKILLS_DISCOVERY_HINT,
   MISSING_WORKSPACE_ERROR,
+  resolveEvolutionWorkspaceLayout,
   skillPublisherDirectory,
-} from './workspace-bind';
+} from './attach/workspace-bind';
+import { probeCapabilities } from './capabilities/probe-capabilities';
+import { createMastraEvolution } from './create-mastra-evolution';
 
 import type { LearningLike } from './types';
 import type { Evidence } from '@mastra-evolution/core';
@@ -33,16 +35,20 @@ afterEach(async () => {
 });
 
 function duckWorkspace(basePath: string): {
-  filesystem: { basePath: string; readOnly?: boolean };
+  filesystem: { basePath: string; allowedPaths: string[]; readOnly?: boolean };
   skills: string[];
   skillSource?: unknown;
   toolsConfig: Record<string, unknown> | undefined;
   getToolsConfig: () => Record<string, unknown> | undefined;
   setToolsConfig: (config?: unknown) => void;
 } {
+  const layout = resolveEvolutionWorkspaceLayout(basePath);
   return {
-    filesystem: { basePath },
-    skills: ['skills'],
+    filesystem: {
+      basePath: layout.basePath,
+      allowedPaths: [...layout.allowedPaths],
+    },
+    skills: [...layout.skills],
     skillSource: undefined,
     toolsConfig: { requireApproval: true },
     getToolsConfig() {
@@ -257,14 +263,25 @@ describe('createMastraEvolution', () => {
     expect(() => createMastraEvolution({ learning: true })).toThrow(MISSING_WORKSPACE_ERROR);
   });
 
+  it('throws for a Mastra-like agent with hasOwnWorkspace but no sync workspace field', () => {
+    const agent = {
+      id: 'analytics-agent',
+      hasOwnWorkspace() {
+        return true;
+      },
+    };
+    expect(() => createMastraEvolution({ agent, learning: true })).toThrow(MISSING_WORKSPACE_ERROR);
+  });
+
   it('infers sibling .evolution store and plugs workspace hooks for learning: true', async () => {
     const root = await uniqueTempDir();
     const workspaceDir = path.join(root, 'workspace');
     const workspace = duckWorkspace(workspaceDir);
     const agent = { id: 'analytics-agent', workspace };
     const evolution = createMastraEvolution({ agent, learning: true });
-    expect(inspectWorkspace(workspace).storeDirectory).toBe(path.join(root, '.evolution'));
-    expect(inspectWorkspace(workspace).skillsDirectory).toBe(path.join(workspaceDir, 'skills'));
+    const bind = inspectWorkspace(workspace);
+    expect(bind.storeDirectory).toBe(path.join(root, '.evolution'));
+    expect(bind.curatedSkillsDirectory).toBe(path.join(workspaceDir, 'skills'));
     expect(workspace.skillSource).toBeUndefined();
     expect(workspace.toolsConfig?.requireApproval).toBe(true);
     const hooks = workspace.toolsConfig?.hooks as {
@@ -342,7 +359,7 @@ describe('createMastraEvolution', () => {
     expect(override.toolsConfig?.hooks).toBeDefined();
   });
 
-  it('constructs improvement against the workspace skills directory without setting skillSource', async () => {
+  it('constructs improvement against .evolution/skills without setting skillSource', async () => {
     const root = await uniqueTempDir();
     const workspaceDir = path.join(root, 'workspace');
     const workspace = duckWorkspace(workspaceDir);
@@ -353,8 +370,34 @@ describe('createMastraEvolution', () => {
         improvement: { autonomy: 'auto-promote-bounded' },
       }),
     ).not.toThrow();
-    expect(inspectWorkspace(workspace).skillsDirectory).toBe(path.join(workspaceDir, 'skills'));
+    const bind = inspectWorkspace(workspace);
+    expect(bind.curatedSkillsDirectory).toBe(path.join(workspaceDir, 'skills'));
+    expect(bind.learnedSkillsDirectory).toBe(path.join(root, '.evolution', 'skills'));
     expect(workspace.skillSource).toBeUndefined();
+  });
+
+  it('warns when improvement publishes but Workspace cannot discover learned skills', async () => {
+    const root = await uniqueTempDir();
+    const workspaceDir = path.join(root, 'workspace');
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    try {
+      createMastraEvolution({
+        agent: {
+          id: 'analytics-agent',
+          workspace: {
+            filesystem: { basePath: workspaceDir },
+            skills: ['skills'],
+            getToolsConfig: () => ({ requireApproval: true }),
+            setToolsConfig: () => undefined,
+          },
+        },
+        learning: true,
+        improvement: { autonomy: 'auto-promote-bounded' },
+      });
+      expect(warn).toHaveBeenCalledWith(expect.stringContaining(LEARNED_SKILLS_DISCOVERY_HINT));
+    } finally {
+      warn.mockRestore();
+    }
   });
 
   it('does not auto-publish when LocalFilesystem is readOnly', async () => {
@@ -382,16 +425,20 @@ describe('createMastraEvolution', () => {
       learning: true,
       improvement: { autonomy: 'auto-promote-bounded' },
     });
+    expect(typeof (evolution.learning as { draftSkill?: unknown } | undefined)?.draftSkill).toBe(
+      'function',
+    );
     const signal = {
       kind: 'procedure',
       summary: 'Use booked revenue excluding cancellations.',
       suggestedAction: 'create-skill',
     };
-    for (let index = 0; index < 3; index += 1) {
+    for (let index = 0; index < 5; index += 1) {
       await evolution.extractor().onExtracted(signal);
     }
     const skillPath = path.join(
-      workspaceDir,
+      root,
+      '.evolution',
       'skills',
       'use-booked-revenue-excluding-cancellations',
       'SKILL.md',
@@ -401,6 +448,40 @@ describe('createMastraEvolution', () => {
     expect(readFileSync(skillPath, 'utf8').split('---').length).toBeLessThan(5);
     const lessons = await evolution.store?.findLessons({ agentId: 'analytics-agent' });
     expect(lessons?.some((lesson) => lesson.status === 'accepted')).toBe(true);
+    const events = await evolution.store?.findEvents('analytics-agent');
+    expect(events?.filter((event) => event.type === 'evolution.promote')).toHaveLength(1);
+  });
+
+  it('does not auto-publish skills when improvement autonomy is validate', async () => {
+    const root = await uniqueTempDir();
+    const workspaceDir = path.join(root, 'workspace');
+    const workspace = duckWorkspace(workspaceDir);
+    const evolution = createMastraEvolution({
+      agent: { id: 'analytics-agent', workspace },
+      learning: true,
+      improvement: { autonomy: 'validate' },
+    });
+    const signal = {
+      kind: 'procedure',
+      summary: 'Use booked revenue excluding cancellations.',
+      suggestedAction: 'create-skill',
+    };
+    for (let index = 0; index < 5; index += 1) {
+      await evolution.extractor().onExtracted(signal);
+    }
+    expect(
+      existsSync(
+        path.join(
+          root,
+          '.evolution',
+          'skills',
+          'use-booked-revenue-excluding-cancellations',
+          'SKILL.md',
+        ),
+      ),
+    ).toBe(false);
+    const events = await evolution.store?.findEvents('analytics-agent');
+    expect(events?.some((event) => event.type === 'evolution.promote')).toBe(false);
   });
 });
 

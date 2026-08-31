@@ -1,4 +1,4 @@
-import type { MastraExtractorFragment } from './types';
+import type { MastraExtractorFragment } from '../types';
 
 export const EVOLUTION_EXTRACTOR_NAME = 'Evolution learning signal';
 
@@ -19,10 +19,6 @@ export function createEvolutionExtractor(fragment?: MastraExtractorFragment): Ev
   return {
     name: EVOLUTION_EXTRACTOR_NAME,
     instructions: EVOLUTION_EXTRACTOR_INSTRUCTIONS,
-    onExtracted: fragment?.onExtracted ?? noopExtracted,
+    onExtracted: fragment?.onExtracted ?? (() => Promise.resolve()),
   };
-}
-
-function noopExtracted(_payload: unknown, _ctx?: unknown): Promise<void> {
-  return Promise.resolve();
 }

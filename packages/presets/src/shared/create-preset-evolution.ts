@@ -1,5 +1,10 @@
+import { parseAutonomy } from '@mastra-evolution/core';
 import { createImprovement } from '@mastra-evolution/improvement';
-import { createMastraEvaluator, createMastraEvolution } from '@mastra-evolution/mastra';
+import {
+  createBoundedSkillEvaluator,
+  createMastraEvaluator,
+  createMastraEvolution,
+} from '@mastra-evolution/mastra';
 
 import type { SharedImprovementPresetOptions, SharedPresetOptions } from './types';
 import type {
@@ -17,13 +22,17 @@ import type { MastraEvolution } from '@mastra-evolution/mastra';
 
 function resolvePresetEvaluator(
   options: Pick<SharedImprovementPresetOptions, 'evaluator' | 'experimentsAvailable'>,
+  autonomy: AutonomyLevel | AutonomyName,
 ): ImprovementEvaluator {
-  return (
-    options.evaluator ??
-    createMastraEvaluator({
-      experimentsAvailable: options.experimentsAvailable ?? false,
-    })
-  );
+  if (options.evaluator) {
+    return options.evaluator;
+  }
+  if (parseAutonomy(autonomy) >= 4) {
+    return createBoundedSkillEvaluator();
+  }
+  return createMastraEvaluator({
+    experimentsAvailable: options.experimentsAvailable ?? false,
+  });
 }
 
 export function createPresetImprovement(
@@ -36,14 +45,15 @@ export function createPresetImprovement(
     policy?: PromotionPolicy;
   },
 ): ImprovementRuntime {
+  const level = parseAutonomy(extras.autonomy);
   return createImprovement({
     store,
-    evaluator: resolvePresetEvaluator(options),
+    evaluator: resolvePresetEvaluator(options, extras.autonomy),
     publisher: extras.publisher,
     approval: extras.approval ?? options.approval,
     policy: extras.policy,
     autonomy: extras.autonomy,
-    experimentsAvailable: options.experimentsAvailable,
+    experimentsAvailable: options.experimentsAvailable ?? level >= 4,
     telemetry: options.telemetry,
     now: options.now,
     id: options.id,

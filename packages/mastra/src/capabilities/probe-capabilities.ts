@@ -1,6 +1,6 @@
 import { isPlainObject as isRecord, ownValue } from '@mastra-evolution/core';
 
-import type { MastraCapabilities } from './types';
+import type { MastraCapabilities } from '../types';
 
 const EMPTY_CAPABILITIES: MastraCapabilities = {
   observationalMemory: false,

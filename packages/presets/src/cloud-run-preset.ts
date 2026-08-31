@@ -1,11 +1,11 @@
 import { FilesystemSkillPublisher } from '@mastra-evolution/mastra';
 import { PostgresEvolutionStore } from '@mastra-evolution/storage-postgres';
 
-import { HOBBY_SKILL_AUTONOMY } from './autonomy-defaults';
-import { createPresetEvolution, createPresetImprovement } from './create-preset-evolution';
-import { createPresetLearning } from './create-preset-learning';
+import { HOBBY_SKILL_AUTONOMY } from './shared/autonomy-defaults';
+import { createPresetEvolution, createPresetImprovement } from './shared/create-preset-evolution';
+import { createPresetLearning } from './shared/create-preset-learning';
 
-import type { SharedImprovementPresetOptions } from './types';
+import type { SharedImprovementPresetOptions } from './shared/types';
 import type { AutonomyLevel, AutonomyName, EvolutionPublisher } from '@mastra-evolution/core';
 import type { ImprovementRuntime } from '@mastra-evolution/improvement';
 import type { LearningRuntime } from '@mastra-evolution/learning';

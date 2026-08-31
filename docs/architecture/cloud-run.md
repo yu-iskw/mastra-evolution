@@ -1,6 +1,6 @@
 # Cloud Run deployment
 
-Use this layout when more than one instance serves the same agent (A2A, HTTP, or otherwise). Product origin: [`RFC.md`](../../RFC.md) §26–§27. Example wiring: [`examples/cloud-run-a2a`](../../examples/cloud-run-a2a).
+Use this layout when more than one instance serves the same agent (A2A, HTTP, or otherwise). Example wiring: [`examples/cloud-run-a2a`](../../examples/cloud-run-a2a).
 
 ## PostgreSQL for state, object storage for artifacts
 
@@ -51,4 +51,4 @@ Operational rules:
 - Skill bytes go to versioned blob storage, not a shared FUSE SQLite file.
 - Evolution is transport-agnostic: A2A supplies thread and resource ids; the store keys on those, not on instance identity.
 
-See `RFC.md` F5 / KTD10 and `examples/cloud-run-a2a/README.md`.
+See [`examples/cloud-run-a2a`](../../examples/cloud-run-a2a).

@@ -1,28 +1,37 @@
-import { CapabilityError, isPlainObject as isRecord } from '@mastra-evolution/core';
+import {
+  CapabilityError,
+  isPlainObject as isRecord,
+  parseAutonomy,
+  stringField,
+} from '@mastra-evolution/core';
 import { createImprovement } from '@mastra-evolution/improvement';
-import { createLearning } from '@mastra-evolution/learning';
+import { createLearning, type IngestResult } from '@mastra-evolution/learning';
 import { LocalEvolutionStore } from '@mastra-evolution/storage-local';
 
-import { applyProcessors, mergeCallHooks } from './apply-to-call';
-import { createBoundedSkillEvaluator } from './create-bounded-skill-evaluator';
-import { createEvolutionExtractor } from './create-evolution-extractor';
-import { createMastraEvaluator } from './create-mastra-evaluator';
-import { FilesystemSkillPublisher } from './filesystem-skill-publisher';
-import {
-  createAfterToolCall,
-  createLearningExtractors,
-  resolveAgentId,
-  resolveLearning,
-} from './learning-bridge';
-import { probeCapabilities } from './probe-capabilities';
-import { promoteAcceptedLesson } from './promote-accepted-lesson';
+import { applyProcessors, mergeCallHooks } from './attach/apply-to-call';
 import {
   attachWorkspaceHooks,
   inspectWorkspace,
+  LEARNED_SKILLS_DISCOVERY_HINT,
+  learnedSkillsUnderStore,
   MISSING_WORKSPACE_ERROR,
   resolveAttachedWorkspace,
   skillPublisherDirectory,
-} from './workspace-bind';
+  workspaceCanLoadLearnedSkills,
+} from './attach/workspace-bind';
+import { probeCapabilities } from './capabilities/probe-capabilities';
+import { createBoundedSkillEvaluator } from './evaluate/create-bounded-skill-evaluator';
+import { createMastraEvaluator } from './evaluate/create-mastra-evaluator';
+import { createEvolutionExtractor } from './learning/create-evolution-extractor';
+import {
+  createAfterToolCall,
+  createLearningExtractors,
+  isLearningRuntime,
+  resolveAgentId,
+  resolveLearning,
+} from './learning/learning-bridge';
+import { FilesystemSkillPublisher } from './skills/filesystem-skill-publisher';
+import { promoteAcceptedLesson } from './skills/promote-accepted-lesson';
 
 import type {
   CreateMastraEvolutionOptions,
@@ -31,12 +40,7 @@ import type {
   LearningLike,
   MastraEvolution,
 } from './types';
-import type {
-  EvolutionStore,
-  EvolutionScope,
-  ImprovementEvaluator,
-  Lesson,
-} from '@mastra-evolution/core';
+import type { EvolutionStore, EvolutionScope, Lesson } from '@mastra-evolution/core';
 import type { ImprovementRuntime } from '@mastra-evolution/improvement';
 
 const LEARN_AUTONOMY = 'learn' as const;
@@ -45,7 +49,8 @@ const HOBBY_IMPROVEMENT_AUTONOMY = 'auto-promote-bounded' as const;
 /**
  * Plug Evolution into an existing Mastra Agent without subclassing.
  *
- * Infers `agent.workspace` (or `options.workspace`), merges `afterToolCall` into
+ * Pass `workspace` for a real Mastra Agent (`#workspace` is private; `getWorkspace()`
+ * is async). Duck-typed `agent.workspace` still works. Merges `afterToolCall` into
  * workspace `tools.hooks` when `setToolsConfig` exists, and infers a local store
  * beside the workspace filesystem when `learning: true`.
  *
@@ -58,8 +63,12 @@ export function createMastraEvolution(options: CreateMastraEvolutionOptions): Ma
   const agentId = resolveAgentId(options.agent);
   const store = resolveStore(options, bind);
   const rawLearning = materializeLearning(options.learning, store, agentId);
-  const improvement = materializeImprovement(options.improvement, store, bind);
-  const learningInput = attachImprovementLoop(rawLearning, improvement, store);
+  const improvement = materializeImprovement(options.improvement, store, bind, workspace);
+  const learningInput = attachImprovementLoop(
+    rawLearning,
+    shouldAutoPromoteOnIngest(options.improvement) ? improvement : undefined,
+    store,
+  );
   const learning = resolveLearning(learningInput);
   const capabilities = {
     ...probeCapabilities(options.agent),
@@ -80,19 +89,19 @@ export function createMastraEvolution(options: CreateMastraEvolutionOptions): Ma
     processors,
     hooks,
     store,
-    learning: hasLearningRuntime(learningInput) ? learningInput : undefined,
+    learning: isLearningRuntime(learningInput) ? learningInput : undefined,
     improvement,
     applyToCall<T extends Record<string, unknown> = Record<string, unknown>>(callOptions?: T): T {
-      const source = (callOptions ?? {}) as T;
-      const next = {
-        ...source,
-        hooks: mergeCallHooks((source as { hooks?: unknown }).hooks, hooks),
-      } as T;
-      return applyProcessors(source, next, processors);
+      const source = callOptions ?? ({} as T);
+      return applyProcessors(
+        source,
+        {
+          ...source,
+          hooks: mergeCallHooks('hooks' in source ? source.hooks : undefined, hooks),
+        },
+        processors,
+      );
     },
-    /**
-     * Identity only. The factory already plugs workspace hooks when possible.
-     */
     register<T>(agent: T): T {
       return agent;
     },
@@ -109,17 +118,13 @@ function resolveStore(
   if (options.store) {
     return options.store;
   }
-  if (!needsConstructedStore(options.learning, options.improvement)) {
+  if (!(willConstructLearning(options.learning) || willConstructImprovement(options.improvement))) {
     return undefined;
   }
   if (bind.storeDirectory === undefined) {
     throw new CapabilityError(MISSING_WORKSPACE_ERROR);
   }
   return new LocalEvolutionStore({ directory: bind.storeDirectory });
-}
-
-function needsConstructedStore(learning: unknown, improvement: unknown): boolean {
-  return willConstructLearning(learning) || willConstructImprovement(improvement);
 }
 
 function willConstructLearning(learning: unknown): boolean {
@@ -129,13 +134,15 @@ function willConstructLearning(learning: unknown): boolean {
   if (learning === false || learning === undefined) {
     return false;
   }
-  if (hasLearningRuntime(learning)) {
+  if (isLearningRuntime(learning)) {
     return false;
   }
   return isRecord(learning) && learning.enabled !== false;
 }
 
-function willConstructImprovement(improvement: unknown): boolean {
+function willConstructImprovement(
+  improvement: CreateMastraEvolutionOptions['improvement'],
+): improvement is true | ImprovementConfig {
   if (improvement === true) {
     return true;
   }
@@ -162,7 +169,7 @@ function materializeLearning(
   if (learning === undefined || learning === false) {
     return learning === false ? { enabled: false } : undefined;
   }
-  if (hasLearningRuntime(learning)) {
+  if (isLearningRuntime(learning)) {
     return learning;
   }
   if (learning === true) {
@@ -197,54 +204,76 @@ function materializeImprovement(
   improvement: CreateMastraEvolutionOptions['improvement'],
   store: EvolutionStore | undefined,
   bind: ReturnType<typeof inspectWorkspace>,
+  workspace: unknown,
 ): ImprovementRuntime | undefined {
-  if (canAutoPromote(improvement)) {
+  if (isImprovementRuntime(improvement)) {
     return improvement;
   }
-  if (!isConstructableImprovement(improvement)) {
+  if (!willConstructImprovement(improvement)) {
     return undefined;
   }
   if (store === undefined) {
     throw new CapabilityError(MISSING_WORKSPACE_ERROR);
   }
-  const config = improvementConfig(improvement);
-  const publisherDirectory = skillPublisherDirectory(bind);
+  const config: ImprovementConfig =
+    improvement === true ? { enabled: true, autonomy: HOBBY_IMPROVEMENT_AUTONOMY } : improvement;
+  const autonomy = config.autonomy ?? HOBBY_IMPROVEMENT_AUTONOMY;
+  const level = parseAutonomy(autonomy);
+  const publisherDirectory = resolvePublisherDirectory(bind, store);
+  if (
+    publisherDirectory !== undefined &&
+    !workspaceCanLoadLearnedSkills(workspace, publisherDirectory)
+  ) {
+    console.warn(`[mastra-evolution] ${LEARNED_SKILLS_DISCOVERY_HINT}`);
+  }
   const publisher =
     publisherDirectory === undefined
       ? undefined
       : new FilesystemSkillPublisher({ directory: publisherDirectory });
   return createImprovement({
     store,
-    evaluator: resolveEvaluator(config),
+    evaluator:
+      config.evaluator ??
+      (level >= 4
+        ? createBoundedSkillEvaluator()
+        : createMastraEvaluator({
+            experimentsAvailable: config.experimentsAvailable ?? false,
+          })),
     publisher,
     approval: config.approval,
     policy: config.promotionPolicy,
-    autonomy: config.autonomy ?? HOBBY_IMPROVEMENT_AUTONOMY,
-    experimentsAvailable: config.experimentsAvailable ?? true,
+    autonomy,
+    experimentsAvailable: config.experimentsAvailable ?? level >= 4,
   });
 }
 
-function isConstructableImprovement(
+function resolvePublisherDirectory(
+  bind: ReturnType<typeof inspectWorkspace>,
+  store: EvolutionStore,
+): string | undefined {
+  if (bind.readOnly) {
+    return undefined;
+  }
+  const storeDirectory = isRecord(store) ? stringField(store, 'directory') : undefined;
+  if (storeDirectory !== undefined) {
+    return learnedSkillsUnderStore(storeDirectory);
+  }
+  return skillPublisherDirectory(bind);
+}
+
+function shouldAutoPromoteOnIngest(
   improvement: CreateMastraEvolutionOptions['improvement'],
-): improvement is true | ImprovementConfig {
-  return willConstructImprovement(improvement);
-}
-
-function improvementConfig(improvement: true | ImprovementConfig): ImprovementConfig {
+): boolean {
   if (improvement === true) {
-    return { enabled: true, autonomy: HOBBY_IMPROVEMENT_AUTONOMY };
+    return true;
   }
-  return improvement;
-}
-
-function resolveEvaluator(config: ImprovementConfig): ImprovementEvaluator {
-  if (config.evaluator) {
-    return config.evaluator;
+  if (improvement === false || improvement === undefined || isImprovementRuntime(improvement)) {
+    return false;
   }
-  if (config.experimentsAvailable === true) {
-    return createMastraEvaluator({ experimentsAvailable: true });
+  if (!willConstructImprovement(improvement)) {
+    return false;
   }
-  return createBoundedSkillEvaluator();
+  return parseAutonomy(improvement.autonomy ?? HOBBY_IMPROVEMENT_AUTONOMY) >= 4;
 }
 
 function attachImprovementLoop(
@@ -252,10 +281,11 @@ function attachImprovementLoop(
   improvement: ImprovementRuntime | undefined,
   store: EvolutionStore | undefined,
 ): LearningLike | { enabled: boolean } | undefined {
-  if (!hasLearningRuntime(learning) || improvement === undefined || store === undefined) {
+  if (!isLearningRuntime(learning) || improvement === undefined || store === undefined) {
     return learning;
   }
   return {
+    ...learning,
     async ingest(evidence) {
       const result = await learning.ingest(evidence);
       await promoteFromIngestResult(result, improvement, store);
@@ -283,34 +313,47 @@ async function promoteFromIngestResult(
   }
   try {
     await promoteAcceptedLesson({ lesson, improvement, store });
-  } catch {
-    return;
+  } catch (error: unknown) {
+    // Ingest already succeeded; do not fail the agent tool hook on promote/publish errors.
+    console.error('[mastra-evolution] skill promote failed after ingest', error);
   }
 }
 
 function lessonFromIngestResult(result: unknown): Lesson | undefined {
-  if (!isRecord(result) || !isRecord(result.lesson)) {
+  if (!isIngestResult(result) || result.lesson === undefined) {
     return undefined;
   }
-  const lesson = result.lesson as unknown as Lesson;
-  return typeof lesson.id === 'string' && typeof lesson.status === 'string' ? lesson : undefined;
+  return result.lesson;
 }
 
-function hasLearningRuntime(value: unknown): value is LearningLike {
+function isIngestResult(value: unknown): value is IngestResult {
+  if (
+    !isRecord(value) ||
+    typeof value.stored !== 'boolean' ||
+    typeof value.duplicate !== 'boolean'
+  ) {
+    return false;
+  }
+  return value.lesson === undefined || isLesson(value.lesson);
+}
+
+function isLesson(value: unknown): value is Lesson {
+  if (!isRecord(value)) {
+    return false;
+  }
   return (
-    isRecord(value) &&
-    (typeof value.ingest === 'function' || typeof value.ingestSignal === 'function')
+    typeof value.id === 'string' &&
+    typeof value.agentId === 'string' &&
+    typeof value.statement === 'string' &&
+    typeof value.status === 'string' &&
+    Array.isArray(value.evidenceIds)
   );
 }
 
-function canAutoPromote(value: unknown): value is ImprovementRuntime {
+function isImprovementRuntime(value: unknown): value is ImprovementRuntime {
   return (
     isRecord(value) &&
     typeof value.proposeFromLesson === 'function' &&
     typeof value.promote === 'function'
   );
-}
-
-function isImprovementRuntime(value: unknown): value is { proposeFromLesson: unknown } {
-  return isRecord(value) && typeof value.proposeFromLesson === 'function';
 }
