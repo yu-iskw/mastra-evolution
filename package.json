@@ -1,13 +1,14 @@
 {
-  "name": "typescript-template",
-  "version": "1.0.0",
+  "name": "mastra-evolution",
+  "version": "0.1.0",
   "private": true,
-  "description": "",
+  "description": "Self-learning and self-improvement control plane for Mastra agents",
   "keywords": [],
   "license": "Apache-2.0",
   "author": "",
   "scripts": {
     "build": "pnpm --recursive build",
+    "build:examples": "pnpm --filter \"./examples/**\" build",
     "trunk": "trunk",
     "format": "pnpm format:trunk",
     "format:all": "pnpm format:trunk-all",
@@ -30,6 +31,7 @@
   },
   "devDependencies": {
     "@trunkio/launcher": "^1.3.4",
+    "@types/node": "^22.20.1",
     "@typescript-eslint/eslint-plugin": "^8.59.1",
     "@typescript-eslint/parser": "^8.59.1",
     "@vitest/coverage-v8": "4.1.3",

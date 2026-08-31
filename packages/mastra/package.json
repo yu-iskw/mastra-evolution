@@ -1,0 +1,48 @@
+{
+  "name": "@mastra-evolution/mastra",
+  "version": "0.1.0",
+  "description": "Mastra adapter for Evolution: attach without subclassing, probe capabilities, publish skills, and evaluate proposals.",
+  "keywords": [
+    "mastra",
+    "evolution",
+    "agents"
+  ],
+  "license": "Apache-2.0",
+  "author": "",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@mastra-evolution/core": "workspace:*",
+    "@mastra-evolution/improvement": "workspace:*",
+    "@mastra-evolution/learning": "workspace:*"
+  },
+  "devDependencies": {
+    "@mastra-evolution/testing": "workspace:*"
+  },
+  "peerDependencies": {
+    "@mastra/core": ">=1.63.0 <2",
+    "@mastra/memory": ">=1.0.0 <2"
+  },
+  "peerDependenciesMeta": {
+    "@mastra/core": {
+      "optional": true
+    },
+    "@mastra/memory": {
+      "optional": true
+    }
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "name": "@mastra-evolution/example-cloud-run-a2a",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Typechecked Cloud Run + A2A wiring for Evolution with PostgreSQL state.",
+  "license": "Apache-2.0",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js"
+  },
+  "dependencies": {
+    "@mastra-evolution/core": "workspace:*",
+    "@mastra-evolution/improvement": "workspace:*",
+    "@mastra-evolution/learning": "workspace:*",
+    "@mastra-evolution/mastra": "workspace:*",
+    "@mastra-evolution/presets": "workspace:*",
+    "@mastra-evolution/storage-postgres": "workspace:*"
+  }
+}

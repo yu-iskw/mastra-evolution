@@ -1,0 +1,39 @@
+{
+  "name": "@mastra-evolution/presets",
+  "version": "0.1.0",
+  "description": "Batteries-included Evolution presets for local, Cloud Run, and enterprise deployments.",
+  "keywords": [
+    "mastra",
+    "evolution",
+    "presets"
+  ],
+  "license": "Apache-2.0",
+  "author": "",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@mastra-evolution/core": "workspace:*",
+    "@mastra-evolution/improvement": "workspace:*",
+    "@mastra-evolution/learning": "workspace:*",
+    "@mastra-evolution/mastra": "workspace:*",
+    "@mastra-evolution/storage-local": "workspace:*",
+    "@mastra-evolution/storage-postgres": "workspace:*"
+  },
+  "devDependencies": {
+    "@mastra-evolution/testing": "workspace:*"
+  }
+}

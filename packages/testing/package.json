@@ -1,0 +1,16 @@
+{
+  "name": "@mastra-evolution/testing",
+  "version": "0.1.0",
+  "description": "Fakes and contract tests for Mastra Evolution.",
+  "license": "Apache-2.0",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@mastra-evolution/core": "workspace:*"
+  }
+}

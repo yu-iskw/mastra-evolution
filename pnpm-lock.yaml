@@ -1,7 +1,7 @@
 lockfileVersion: '9.0'
 
 settings:
-  autoInstallPeers: true
+  autoInstallPeers: false
   excludeLinksFromLockfile: false
 
 overrides:
@@ -16,6 +16,9 @@ importers:
       '@trunkio/launcher':
         specifier: ^1.3.4
         version: 1.3.4
+      '@types/node':
+        specifier: ^22.20.1
+        version: 22.20.1
       '@typescript-eslint/eslint-plugin':
         specifier: ^8.59.1
         version: 8.59.1(@typescript-eslint/parser@8.59.1(eslint@10.3.0(jiti@2.6.1))(typescript@5.9.3))(eslint@10.3.0(jiti@2.6.1))(typescript@5.9.3)
@@ -57,12 +60,159 @@ importers:
         version: 5.9.3
       vite:
         specifier: ^8.0.16
-        version: 8.0.16(jiti@2.6.1)(yaml@2.8.3)
+        version: 8.0.16(@types/node@22.20.1)(jiti@2.6.1)(yaml@2.8.3)
       vitest:
         specifier: ^4.1.3
-        version: 4.1.3(@vitest/coverage-v8@4.1.3)(vite@8.0.16(jiti@2.6.1)(yaml@2.8.3))
+        version: 4.1.3(@types/node@22.20.1)(@vitest/coverage-v8@4.1.3)(vite@8.0.16(@types/node@22.20.1)(jiti@2.6.1)(yaml@2.8.3))
 
-  packages/common: {}
+  examples/cloud-run-a2a:
+    dependencies:
+      '@mastra-evolution/core':
+        specifier: workspace:*
+        version: link:../../packages/core
+      '@mastra-evolution/improvement':
+        specifier: workspace:*
+        version: link:../../packages/improvement
+      '@mastra-evolution/learning':
+        specifier: workspace:*
+        version: link:../../packages/learning
+      '@mastra-evolution/mastra':
+        specifier: workspace:*
+        version: link:../../packages/mastra
+      '@mastra-evolution/presets':
+        specifier: workspace:*
+        version: link:../../packages/presets
+      '@mastra-evolution/storage-postgres':
+        specifier: workspace:*
+        version: link:../../packages/storage-postgres
+
+  examples/local-learning:
+    dependencies:
+      '@mastra-evolution/core':
+        specifier: workspace:*
+        version: link:../../packages/core
+      '@mastra-evolution/learning':
+        specifier: workspace:*
+        version: link:../../packages/learning
+      '@mastra-evolution/mastra':
+        specifier: workspace:*
+        version: link:../../packages/mastra
+      '@mastra-evolution/presets':
+        specifier: workspace:*
+        version: link:../../packages/presets
+      '@mastra-evolution/storage-local':
+        specifier: workspace:*
+        version: link:../../packages/storage-local
+
+  examples/local-self-improvement:
+    dependencies:
+      '@mastra-evolution/core':
+        specifier: workspace:*
+        version: link:../../packages/core
+      '@mastra-evolution/improvement':
+        specifier: workspace:*
+        version: link:../../packages/improvement
+      '@mastra-evolution/learning':
+        specifier: workspace:*
+        version: link:../../packages/learning
+      '@mastra-evolution/mastra':
+        specifier: workspace:*
+        version: link:../../packages/mastra
+      '@mastra-evolution/presets':
+        specifier: workspace:*
+        version: link:../../packages/presets
+      '@mastra-evolution/storage-local':
+        specifier: workspace:*
+        version: link:../../packages/storage-local
+
+  packages/core: {}
+
+  packages/improvement:
+    dependencies:
+      '@mastra-evolution/core':
+        specifier: workspace:*
+        version: link:../core
+    devDependencies:
+      '@mastra-evolution/testing':
+        specifier: workspace:*
+        version: link:../testing
+
+  packages/learning:
+    dependencies:
+      '@mastra-evolution/core':
+        specifier: workspace:*
+        version: link:../core
+    devDependencies:
+      '@mastra-evolution/testing':
+        specifier: workspace:*
+        version: link:../testing
+
+  packages/mastra:
+    dependencies:
+      '@mastra-evolution/core':
+        specifier: workspace:*
+        version: link:../core
+      '@mastra-evolution/improvement':
+        specifier: workspace:*
+        version: link:../improvement
+      '@mastra-evolution/learning':
+        specifier: workspace:*
+        version: link:../learning
+    devDependencies:
+      '@mastra-evolution/testing':
+        specifier: workspace:*
+        version: link:../testing
+
+  packages/presets:
+    dependencies:
+      '@mastra-evolution/core':
+        specifier: workspace:*
+        version: link:../core
+      '@mastra-evolution/improvement':
+        specifier: workspace:*
+        version: link:../improvement
+      '@mastra-evolution/learning':
+        specifier: workspace:*
+        version: link:../learning
+      '@mastra-evolution/mastra':
+        specifier: workspace:*
+        version: link:../mastra
+      '@mastra-evolution/storage-local':
+        specifier: workspace:*
+        version: link:../storage-local
+      '@mastra-evolution/storage-postgres':
+        specifier: workspace:*
+        version: link:../storage-postgres
+    devDependencies:
+      '@mastra-evolution/testing':
+        specifier: workspace:*
+        version: link:../testing
+
+  packages/storage-local:
+    dependencies:
+      '@mastra-evolution/core':
+        specifier: workspace:*
+        version: link:../core
+    devDependencies:
+      '@mastra-evolution/testing':
+        specifier: workspace:*
+        version: link:../testing
+
+  packages/storage-postgres:
+    dependencies:
+      '@mastra-evolution/core':
+        specifier: workspace:*
+        version: link:../core
+    devDependencies:
+      '@mastra-evolution/testing':
+        specifier: workspace:*
+        version: link:../testing
+
+  packages/testing:
+    dependencies:
+      '@mastra-evolution/core':
+        specifier: workspace:*
+        version: link:../core
 
 packages:
 
@@ -559,6 +709,9 @@ packages:
 
   '@types/json-schema@7.0.15':
     resolution: {integrity: sha512-5+fP8P8MFNC+AyZCDxrB2pkZFPGzqQWUzpSeuuVLvm8VMcorNYavBqoFcxK8bQz4Qsbn4oUEEem4wDLfcysGHA==}
+
+  '@types/node@22.20.1':
+    resolution: {integrity: sha512-EANqOCF9QFyra+4pfxUcX9STKJpCLjMbObVzljIJomAWSnuSIEAvyzEU53GaajbXJEgdh0iEcPL+DGvpUd4k1Q==}
 
   '@typescript-eslint/eslint-plugin@8.59.1':
     resolution: {integrity: sha512-BOziFIfE+6osHO9FoJG4zjoHUcvI7fTNBSpdAwrNH0/TLvzjsk2oo8XSSOT2HhqUyhZPfHv4UOffoJ9oEEQ7Ag==}
@@ -1543,6 +1696,9 @@ packages:
     resolution: {integrity: sha512-X2wH19RAPZE3+ldGicOkoj/SIA83OIxcJ6Cuaw23hf8Xc6fQpvZXY0SftE2JgS0QhYLUG4uwodSI3R53keyh7w==}
     engines: {node: '>=14'}
 
+  undici-types@6.21.0:
+    resolution: {integrity: sha512-iwDZqg0QAGrg9Rav5H4n0M64c3mkR59cJ6wQp+7C4nI0gsmExaedaYLNO44eT4AtBBwjbTiGPMlt2Md0T9H9JQ==}
+
   unrs-resolver@1.11.1:
     resolution: {integrity: sha512-bSjt9pjaEBnNiGgc9rUiHGKv5l4/TGzDmYw3RhnkJGtLhbnnA/5qJj7x3dNDCRx/PJxu774LlH8lCOlB4hEfKg==}
 
@@ -2022,6 +2178,10 @@ snapshots:
 
   '@types/json-schema@7.0.15': {}
 
+  '@types/node@22.20.1':
+    dependencies:
+      undici-types: 6.21.0
+
   '@typescript-eslint/eslint-plugin@8.59.1(@typescript-eslint/parser@8.59.1(eslint@10.3.0(jiti@2.6.1))(typescript@5.9.3))(eslint@10.3.0(jiti@2.6.1))(typescript@5.9.3)':
     dependencies:
       '@eslint-community/regexpp': 4.12.2
@@ -2235,7 +2395,7 @@ snapshots:
       obug: 2.1.1
       std-env: 4.0.0
       tinyrainbow: 3.1.0
-      vitest: 4.1.3(@vitest/coverage-v8@4.1.3)(vite@8.0.16(jiti@2.6.1)(yaml@2.8.3))
+      vitest: 4.1.3(@types/node@22.20.1)(@vitest/coverage-v8@4.1.3)(vite@8.0.16(@types/node@22.20.1)(jiti@2.6.1)(yaml@2.8.3))
 
   '@vitest/eslint-plugin@1.6.16(@typescript-eslint/eslint-plugin@8.59.1(@typescript-eslint/parser@8.59.1(eslint@10.3.0(jiti@2.6.1))(typescript@5.9.3))(eslint@10.3.0(jiti@2.6.1))(typescript@5.9.3))(eslint@10.3.0(jiti@2.6.1))(typescript@5.9.3)(vitest@4.1.3)':
     dependencies:
@@ -2245,7 +2405,7 @@ snapshots:
     optionalDependencies:
       '@typescript-eslint/eslint-plugin': 8.59.1(@typescript-eslint/parser@8.59.1(eslint@10.3.0(jiti@2.6.1))(typescript@5.9.3))(eslint@10.3.0(jiti@2.6.1))(typescript@5.9.3)
       typescript: 5.9.3
-      vitest: 4.1.3(@vitest/coverage-v8@4.1.3)(vite@8.0.16(jiti@2.6.1)(yaml@2.8.3))
+      vitest: 4.1.3(@types/node@22.20.1)(@vitest/coverage-v8@4.1.3)(vite@8.0.16(@types/node@22.20.1)(jiti@2.6.1)(yaml@2.8.3))
     transitivePeerDependencies:
       - supports-color
 
@@ -2258,13 +2418,13 @@ snapshots:
       chai: 6.2.2
       tinyrainbow: 3.1.0
 
-  '@vitest/mocker@4.1.3(vite@8.0.16(jiti@2.6.1)(yaml@2.8.3))':
+  '@vitest/mocker@4.1.3(vite@8.0.16(@types/node@22.20.1)(jiti@2.6.1)(yaml@2.8.3))':
     dependencies:
       '@vitest/spy': 4.1.3
       estree-walker: 3.0.3
       magic-string: 0.30.21
     optionalDependencies:
-      vite: 8.0.16(jiti@2.6.1)(yaml@2.8.3)
+      vite: 8.0.16(@types/node@22.20.1)(jiti@2.6.1)(yaml@2.8.3)
 
   '@vitest/pretty-format@4.1.3':
     dependencies:
@@ -3017,6 +3177,8 @@ snapshots:
 
   unbash@2.2.0: {}
 
+  undici-types@6.21.0: {}
+
   unrs-resolver@1.11.1:
     dependencies:
       napi-postinstall: 0.3.4
@@ -3051,7 +3213,7 @@ snapshots:
     dependencies:
       punycode: 2.3.1
 
-  vite@8.0.16(jiti@2.6.1)(yaml@2.8.3):
+  vite@8.0.16(@types/node@22.20.1)(jiti@2.6.1)(yaml@2.8.3):
     dependencies:
       lightningcss: 1.32.0
       picomatch: 4.0.4
@@ -3059,14 +3221,15 @@ snapshots:
       rolldown: 1.0.3
       tinyglobby: 0.2.17
     optionalDependencies:
+      '@types/node': 22.20.1
       fsevents: 2.3.3
       jiti: 2.6.1
       yaml: 2.8.3
 
-  vitest@4.1.3(@vitest/coverage-v8@4.1.3)(vite@8.0.16(jiti@2.6.1)(yaml@2.8.3)):
+  vitest@4.1.3(@types/node@22.20.1)(@vitest/coverage-v8@4.1.3)(vite@8.0.16(@types/node@22.20.1)(jiti@2.6.1)(yaml@2.8.3)):
     dependencies:
       '@vitest/expect': 4.1.3
-      '@vitest/mocker': 4.1.3(vite@8.0.16(jiti@2.6.1)(yaml@2.8.3))
+      '@vitest/mocker': 4.1.3(vite@8.0.16(@types/node@22.20.1)(jiti@2.6.1)(yaml@2.8.3))
       '@vitest/pretty-format': 4.1.3
       '@vitest/runner': 4.1.3
       '@vitest/snapshot': 4.1.3
@@ -3083,9 +3246,10 @@ snapshots:
       tinyexec: 1.1.1
       tinyglobby: 0.2.16
       tinyrainbow: 3.1.0
-      vite: 8.0.16(jiti@2.6.1)(yaml@2.8.3)
+      vite: 8.0.16(@types/node@22.20.1)(jiti@2.6.1)(yaml@2.8.3)
       why-is-node-running: 2.3.0
     optionalDependencies:
+      '@types/node': 22.20.1
       '@vitest/coverage-v8': 4.1.3(vitest@4.1.3)
     transitivePeerDependencies:
       - msw

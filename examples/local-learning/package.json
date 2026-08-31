@@ -1,0 +1,20 @@
+{
+  "name": "@mastra-evolution/example-local-learning",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Attach Evolution learning-only to an existing Mastra agent with a local store.",
+  "license": "Apache-2.0",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js"
+  },
+  "dependencies": {
+    "@mastra-evolution/core": "workspace:*",
+    "@mastra-evolution/learning": "workspace:*",
+    "@mastra-evolution/mastra": "workspace:*",
+    "@mastra-evolution/presets": "workspace:*",
+    "@mastra-evolution/storage-local": "workspace:*"
+  }
+}

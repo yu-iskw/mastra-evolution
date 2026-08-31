@@ -2,7 +2,7 @@ import { defineProject } from 'vitest/config';
 
 export default defineProject({
   test: {
-    name: '@typescript-template/common',
+    name: '@mastra-evolution/core',
     include: ['src/**/*.{test,spec}.ts'],
     exclude: ['dist/**'],
   },

@@ -191,6 +191,10 @@ export default [
       ...securityRecommended.rules,
       ...sharedTsRules,
       ...vitestPlugin.configs.recommended.rules,
+      'vitest/expect-expect': [
+        'error',
+        { assertFunctionNames: ['expect', 'expectTypeOf'] },
+      ],
       // Tests often repeat string literals and use conditional expects; keep signal without noise.
       'vitest/no-conditional-expect': 'off',
       'sonarjs/no-duplicate-string': 'off',
