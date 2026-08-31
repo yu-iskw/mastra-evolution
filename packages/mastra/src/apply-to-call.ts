@@ -1,4 +1,4 @@
-import { isRecord, ownValue } from './is-record';
+import { isPlainObject as isRecord, ownValue } from '@mastra-evolution/core';
 
 /**
  * Merge generate/stream `hooks` by key.

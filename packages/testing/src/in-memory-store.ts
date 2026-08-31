@@ -66,7 +66,7 @@ export class InMemoryEvolutionStore implements EvolutionStore {
     );
   }
 
-  putProposal(proposal: ImprovementProposal): Promise<void> {
+  async putProposal(proposal: ImprovementProposal): Promise<void> {
     assertProposalWriteAllowed(this.proposals.get(proposal.id), proposal);
     this.proposals.set(proposal.id, {
       ...proposal,
@@ -75,7 +75,6 @@ export class InMemoryEvolutionStore implements EvolutionStore {
       createdAt: cloneDate(proposal.createdAt),
       updatedAt: cloneDate(proposal.updatedAt),
     });
-    return Promise.resolve();
   }
 
   getProposal(id: string): Promise<ImprovementProposal | undefined> {

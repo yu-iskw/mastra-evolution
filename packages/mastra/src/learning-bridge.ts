@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 
-import { isRecord, stringField } from './is-record';
+import { isPlainObject as isRecord, stringField } from '@mastra-evolution/core';
 
 import type { LearningLike, MastraExtractorFragment } from './types';
 import type { Evidence, EvidenceKind, EvolutionScope } from '@mastra-evolution/core';
@@ -62,11 +62,7 @@ export function createLearningExtractors(
   return [
     {
       onExtracted: async (payload: unknown, ctx?: unknown) => {
-        try {
-          await ingestExtracted(learning, payload, ctx, agentId, scope);
-        } catch {
-          return;
-        }
+        await ingestSafely(() => ingestExtracted(learning, payload, ctx, agentId, scope));
       },
     },
   ];
@@ -80,12 +76,16 @@ export function createAfterToolCall(
     if (!learning.enabled) {
       return;
     }
-    try {
-      await ingestToolResult(learning, context, agentId);
-    } catch {
-      return;
-    }
+    await ingestSafely(() => ingestToolResult(learning, context, agentId));
   };
+}
+
+async function ingestSafely(run: () => Promise<void>): Promise<void> {
+  try {
+    await run();
+  } catch {
+    return;
+  }
 }
 
 async function ingestExtracted(

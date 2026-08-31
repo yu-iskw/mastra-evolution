@@ -2,10 +2,8 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
-import { isNodeErrorCode } from '@mastra-evolution/core';
+import { isNodeErrorCode, isPlainObject as isRecord, stringField } from '@mastra-evolution/core';
 import { renderSkillMarkdown as renderSkillDocument } from '@mastra-evolution/learning';
-
-import { isRecord, stringField } from './is-record';
 
 import type {
   ApprovedImprovementProposal,

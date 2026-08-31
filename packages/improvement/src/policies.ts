@@ -1,6 +1,7 @@
 import {
   containsSensitiveText,
   isOrganizationScope,
+  isPlainObject,
 } from '@mastra-evolution/core';
 
 import type {
@@ -187,15 +188,14 @@ export function promotionDecisionForAutonomy(
 }
 
 function occurrenceFromArtifact(artifact: unknown): number | undefined {
-  if (typeof artifact !== 'object' || artifact === null) {
+  if (!isPlainObject(artifact)) {
     return undefined;
   }
-  const record = artifact as Record<string, unknown>;
-  if (typeof record.occurrenceCount === 'number') {
-    return record.occurrenceCount;
+  if (typeof artifact.occurrenceCount === 'number') {
+    return artifact.occurrenceCount;
   }
-  if (typeof record.occurrence === 'number') {
-    return record.occurrence;
+  if (typeof artifact.occurrence === 'number') {
+    return artifact.occurrence;
   }
   return undefined;
 }
@@ -209,16 +209,15 @@ function textFromArtifact(artifact: unknown): string {
   if (typeof artifact === 'string') {
     return artifact;
   }
-  if (typeof artifact !== 'object' || artifact === null) {
+  if (!isPlainObject(artifact)) {
     return '';
   }
-  const record = artifact as Record<string, unknown>;
   const parts: string[] = [];
-  if (typeof record.markdown === 'string') {
-    parts.push(record.markdown);
+  if (typeof artifact.markdown === 'string') {
+    parts.push(artifact.markdown);
   }
-  if (typeof record.name === 'string') {
-    parts.push(record.name);
+  if (typeof artifact.name === 'string') {
+    parts.push(artifact.name);
   }
   return parts.join(' ');
 }

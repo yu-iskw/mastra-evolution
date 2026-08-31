@@ -1,4 +1,4 @@
-import { isPlainObject } from '@mastra-evolution/core';
+import { isPlainObject, ownValue } from '@mastra-evolution/core';
 
 import type {
   Evidence,
@@ -146,10 +146,6 @@ function assignOptionalString(
   if (typeof value === 'string') {
     assign(value);
   }
-}
-
-function ownValue(record: Record<string, unknown>, key: string): unknown {
-  return Object.getOwnPropertyDescriptor(record, key)?.value;
 }
 
 function asScope(value: unknown): EvolutionScope {

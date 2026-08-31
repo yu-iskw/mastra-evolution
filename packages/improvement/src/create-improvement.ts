@@ -3,8 +3,9 @@ import { parseAutonomy, slugSkillName } from '@mastra-evolution/core';
 import {
   defaultEnterprisePromotionPolicy,
   defaultHobbyPromotionPolicy,
+  LEARNING_ONLY_REASON,
   NON_SKILL_TARGET_REASON,
-  promotionDecisionForAutonomy,
+  RECOMMEND_ONLY_REASON,
 } from './policies';
 
 import type {
@@ -53,6 +54,8 @@ export interface ImprovementRuntime {
   promote(proposalId: string): Promise<ImprovementProposal>;
   rollback(proposalId: string): Promise<ImprovementProposal>;
 }
+
+type EvaluatedProposal = ImprovementProposal & { evaluation: ImprovementEvaluation };
 
 interface RuntimeDeps {
   store: EvolutionStore;
@@ -148,7 +151,7 @@ async function evaluateProposal(
   deps: RuntimeDeps,
   proposalId: string,
   context: EvaluationContext,
-): Promise<ImprovementProposal> {
+): Promise<EvaluatedProposal> {
   const proposal = await requireProposal(deps, proposalId);
   if (!deps.experimentsAvailable || !deps.evaluator) {
     return persistEvaluation(deps, proposal, {
@@ -171,24 +174,22 @@ async function promoteProposal(
   deps: RuntimeDeps,
   proposalId: string,
 ): Promise<ImprovementProposal> {
-  let proposal = await requireProposal(deps, proposalId);
+  const proposal = await requireProposal(deps, proposalId);
   const blocked = autonomyBlock(deps.autonomy);
   if (blocked) {
     return applyDecision(deps, proposal, blocked);
   }
-  if (!proposal.evaluation) {
-    proposal = await evaluateProposal(deps, proposalId, {});
-  }
-  if (!proposal.evaluation) {
-    throw new Error(MISSING_EVALUATOR_ERROR);
-  }
-  const evaluation = proposal.evaluation;
-  const independentSourceCount = await countIndependentSources(deps.store, proposal);
-  const decision = await deps.policy.decide(proposal, evaluation, {
+  const evaluated: EvaluatedProposal =
+    proposal.evaluation === undefined
+      ? await evaluateProposal(deps, proposalId, {})
+      : { ...proposal, evaluation: proposal.evaluation };
+  const { evaluation } = evaluated;
+  const independentSourceCount = await countIndependentSources(deps.store, evaluated);
+  const decision = await deps.policy.decide(evaluated, evaluation, {
     autonomy: deps.autonomy,
     independentSourceCount,
   });
-  return applyDecision(deps, proposal, decision);
+  return applyDecision(deps, evaluated, decision);
 }
 
 async function rollbackProposal(
@@ -306,23 +307,32 @@ async function publishApproved(
 }
 
 function autonomyBlock(autonomy: AutonomyLevel): PromotionDecision | undefined {
-  if (autonomy >= 3) {
-    return undefined;
+  switch (autonomy) {
+    case 0:
+    case 1: {
+      return { decision: 'reject', reason: LEARNING_ONLY_REASON };
+    }
+    case 2: {
+      return { decision: 'reject', reason: RECOMMEND_ONLY_REASON };
+    }
+    case 3:
+    case 4:
+    case 5: {
+      return undefined;
+    }
+    default: {
+      const exhaustive: never = autonomy;
+      return exhaustive;
+    }
   }
-  return promotionDecisionForAutonomy(
-    {
-      target: { type: SKILL_TARGET_TYPE },
-    } as ImprovementProposal,
-    { autonomy },
-  );
 }
 
 async function persistEvaluation(
   deps: RuntimeDeps,
   proposal: ImprovementProposal,
   evaluation: ImprovementEvaluation,
-): Promise<ImprovementProposal> {
-  const next: ImprovementProposal = {
+): Promise<EvaluatedProposal> {
+  const next: EvaluatedProposal = {
     ...proposal,
     evaluation,
     status: evaluation.error && proposal.status === 'draft' ? 'draft' : 'evaluating',
