@@ -58,6 +58,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Build packages
+        run: pnpm --filter "./packages/**" build
+
       - name: Run ESLint
         run: pnpm lint:eslint
 
