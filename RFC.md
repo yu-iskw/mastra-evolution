@@ -1,8 +1,8 @@
 # RFC: Mastra Evolution — Self-Learning and Self-Improvement for Mastra Agents
 
-**Repository:** `yu-iskw/mastra-evolution`  
-**Status:** Draft  
-**Date:** 2026-08-31  
+**Repository:** `yu-iskw/mastra-evolution`
+**Status:** Draft
+**Date:** 2026-08-31
 **Audience:** Mastra application developers, platform engineers, agent engineers, enterprise AI platform teams
 
 ---
@@ -557,6 +557,7 @@ The only package that should know detailed Mastra integration APIs.
 
 Responsibilities:
 
+- plug into an existing Agent (`createMastraEvolution({ agent })`) by inferring `agent.workspace`
 - consume Observational Memory extractors/hooks
 - map Mastra trace/feedback/tool data into `Evidence`
 - integrate with Mastra skill storage/workspaces
@@ -1082,17 +1083,16 @@ const improvement = createImprovement({
 });
 ```
 
-The Mastra adapter should expose integration fragments:
+The Mastra adapter plugs an existing Agent:
 
 ```ts
-const integration = createMastraEvolution({
+const evolution = createMastraEvolution({
   agent,
-  learning,
-  improvement,
+  learning: true,
 });
 ```
 
-Exact ergonomics should be prototyped against Mastra's current APIs.
+Workspace is inferred from `agent.workspace`. Exact ergonomics are in §38.
 
 Avoid:
 
@@ -1622,16 +1622,25 @@ A future enterprise adapter could integrate external change-management systems.
 
 ## 38.1 Local learning only
 
-Target ergonomics:
+Target ergonomics — existing Agent, then one factory call. Workspace appears once, on the Agent:
 
 ```ts
+const workspace = new Workspace({
+  id: 'analytics-workspace',
+  filesystem: new LocalFilesystem({ basePath: directory }),
+  skills: ['skills'],
+});
+
+const agent = new Agent({
+  id: 'analytics-agent',
+  model: 'openai/gpt-5.6-sol',
+  workspace,
+  memory,
+});
+
 const evolution = createMastraEvolution({
-  learning: {
-    enabled: true,
-  },
-  improvement: {
-    enabled: false,
-  },
+  agent,
+  learning: true,
 });
 ```
 
@@ -1639,13 +1648,10 @@ const evolution = createMastraEvolution({
 
 ```ts
 const evolution = createMastraEvolution({
-  learning: {
-    enabled: true,
-  },
+  agent,
+  learning: true,
   improvement: {
-    enabled: true,
-    autonomy: 'validate',
-    targets: ['skill'],
+    autonomy: 'auto-promote-bounded',
   },
 });
 ```
@@ -1654,22 +1660,20 @@ const evolution = createMastraEvolution({
 
 ```ts
 const evolution = createMastraEvolution({
+  agent,
   store: postgresEvolutionStore(...),
-
-  learning: {
-    enabled: true,
-    scopePolicy: enterpriseScopePolicy(...),
-  },
-
+  learning: true,
   improvement: {
-    enabled: true,
-    autonomy: "validate",
+    autonomy: 'validate',
+    approval,
     promotionPolicy: enterprisePromotionPolicy(...),
   },
 });
 ```
 
-These snippets are conceptual API direction, not final API commitments.
+`workspace` is inferred from `agent.workspace`. Optional `workspace` on the factory is only a stand-in when the agent has none. `applyToCall` is an escape hatch for assigned/non-workspace tools. `register` is identity-only.
+
+These snippets are the public attach API, not a second Agent constructor.
 
 ---
 

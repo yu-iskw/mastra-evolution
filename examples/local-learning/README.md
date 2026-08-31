@@ -1,8 +1,12 @@
 # Local learning example
 
-Attach Mastra Evolution **learning only** to an existing agent. No skill is published.
+Plug Mastra Evolution **learning only** into an existing Mastra `Agent` with a real `Workspace`. No skill is published.
 
-This example constructs a plain object `{ name: 'analytics-agent' }` as a stand-in for a Mastra `Agent`. Evolution does not require a `SelfImprovingAgent` subclass.
+Uses model `google/gemini-flash-lite-latest` ([Google on Mastra](https://mastra.ai/models/providers/google)). Auth: `GEMINI_API_KEY` (mapped to `GOOGLE_GENERATIVE_AI_API_KEY` / `GOOGLE_API_KEY` at runtime). Do not commit API keys.
+
+Default run is **101 turns**. Set `EVOLUTION_TURNS` to change that. The example **deletes** the sibling `.evolution/` store and `skills/` directory at start so each run is a fresh learning session.
+
+Put `WORKSPACE_DIR` at `{run}/workspace` so lessons land in `{run}/.evolution` (not `/tmp/.evolution`).
 
 ## Run
 
@@ -11,30 +15,24 @@ From the repository root:
 ```bash
 pnpm install
 pnpm build
-pnpm --filter @mastra-evolution/example-local-learning start
+GEMINI_API_KEY=... pnpm --filter @mastra-evolution/example-local-learning start
 ```
 
-Or from this directory after a workspace build:
-
-```bash
-pnpm start
-```
-
-Without `OPENAI_API_KEY` or `GOOGLE_GENERATIVE_AI_API_KEY`, `main()` prints a skip message and exits 0. It never calls a paid model API.
+Without `GEMINI_API_KEY` (or `GOOGLE_API_KEY` / `GOOGLE_GENERATIVE_AI_API_KEY` / `OPENAI_API_KEY`), `main()` prints a skip message and exits 0.
 
 ## What it wires
 
-- `LocalEvolutionStore` under `EVOLUTION_DIR` (default `.evolution`)
-- `createLearning({ store, agentId, autonomy: 'learn' })`
-- `createMastraEvolution({ agent, learning, improvement: { enabled: false }, store })`
-- `register(agent)` returns the **same object identity**
-
-Learning records evidence and lessons. Improvement is disabled, so nothing is evaluated or published as a skill.
+- `new Workspace({ filesystem: new LocalFilesystem(...) })` then `new Agent({ workspace, model: 'google/gemini-flash-lite-latest' })`
+- `createMastraEvolution({ agent, workspace, learning: true })` — Mastra `Agent` does not expose a sync `workspace` field, so the factory also takes the Workspace instance
+- 101 `agent.generate` turns plus procedure extractors so a booked-revenue lesson is accepted
+- Local store at sibling `.evolution/` of the workspace directory
 
 ## Environment
 
-| Variable                       | Purpose                                                      |
-| ------------------------------ | ------------------------------------------------------------ |
-| `EVOLUTION_DIR`                | Local Evolution state directory (default `.evolution`)       |
-| `OPENAI_API_KEY`               | Optional; without this or the Google key, the example no-ops |
-| `GOOGLE_GENERATIVE_AI_API_KEY` | Optional; without this or the OpenAI key, the example no-ops |
+| Variable                       | Purpose                                          |
+| ------------------------------ | ------------------------------------------------ |
+| `GEMINI_API_KEY`               | Gemini API key (preferred)                       |
+| `GOOGLE_API_KEY`               | Mastra Google router key                         |
+| `GOOGLE_GENERATIVE_AI_API_KEY` | Alternate Mastra Google key                      |
+| `EVOLUTION_TURNS`              | Generate turns (default `101`)                   |
+| `WORKSPACE_DIR`                | Workspace filesystem root (default `.workspace`) |

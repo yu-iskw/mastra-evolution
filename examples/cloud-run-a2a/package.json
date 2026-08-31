@@ -12,8 +12,6 @@
   },
   "dependencies": {
     "@mastra-evolution/core": "workspace:*",
-    "@mastra-evolution/improvement": "workspace:*",
-    "@mastra-evolution/learning": "workspace:*",
     "@mastra-evolution/mastra": "workspace:*",
     "@mastra-evolution/presets": "workspace:*",
     "@mastra-evolution/storage-postgres": "workspace:*"

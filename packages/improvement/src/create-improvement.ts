@@ -281,6 +281,9 @@ async function publishApproved(
     return approved;
   }
 
+  if (typeof deps.publisher.writeDraft === 'function') {
+    await deps.publisher.writeDraft(approved);
+  }
   const publishedRevision = await deps.publisher.publish(approved);
   const published: ImprovementProposal = {
     ...approved,

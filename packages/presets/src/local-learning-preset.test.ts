@@ -55,6 +55,29 @@ describe('localLearningPreset', () => {
     expect(registered.constructor).toBe(Agent);
   });
 
+  it('plugs workspace hooks when the agent already has a workspace', async () => {
+    const workspaceDir = path.join(await uniqueTempDir(), 'workspace');
+    const workspace = {
+      filesystem: { basePath: workspaceDir },
+      skills: ['skills'],
+      toolsConfig: { requireApproval: true } as Record<string, unknown> | undefined,
+      getToolsConfig() {
+        return this.toolsConfig;
+      },
+      setToolsConfig(config?: unknown) {
+        this.toolsConfig = config as Record<string, unknown>;
+      },
+    };
+    const agent = { id: AGENT_ID, workspace };
+    localLearningPreset({
+      directory: await uniqueTempDir(),
+      agentId: AGENT_ID,
+      agent,
+    });
+    expect(workspace.toolsConfig?.requireApproval).toBe(true);
+    expect(workspace.toolsConfig?.hooks).toBeDefined();
+  });
+
   it('uses LocalEvolutionStore under directory/evolution when basename is not evolution', async () => {
     const directory = await uniqueTempDir();
     const preset = localLearningPreset({ directory, agentId: AGENT_ID });

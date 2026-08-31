@@ -28,7 +28,8 @@
   "dependencies": {
     "@mastra-evolution/core": "workspace:*",
     "@mastra-evolution/improvement": "workspace:*",
-    "@mastra-evolution/learning": "workspace:*"
+    "@mastra-evolution/learning": "workspace:*",
+    "@mastra-evolution/storage-local": "workspace:*"
   },
   "devDependencies": {
     "@mastra-evolution/testing": "workspace:*"

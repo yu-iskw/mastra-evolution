@@ -1,6 +1,3 @@
-import { createImprovement } from '@mastra-evolution/improvement';
-import { createLearning } from '@mastra-evolution/learning';
-import { createMastraEvaluator } from '@mastra-evolution/mastra';
 import { CLOUD_STORAGE_FUSE_WARNING, createMastraEvolution } from '@mastra-evolution/presets';
 import { PostgresEvolutionStore } from '@mastra-evolution/storage-postgres';
 
@@ -23,29 +20,12 @@ async function main(): Promise<void> {
   const agent = { name: 'analytics-agent' };
   const sql = createSqlExecutorStub();
   const store: EvolutionStore = new PostgresEvolutionStore({ sql });
-  const learning = createLearning({
-    store,
-    agentId: agent.name,
-    autonomy: 'learn',
-  });
-  const evaluator = createMastraEvaluator({ experimentsAvailable: false });
-  const improvement = createImprovement({
-    store,
-    evaluator,
-    autonomy: 'validate',
-    experimentsAvailable: false,
-  });
   const evolution: MastraEvolution = createMastraEvolution({
     agent,
-    learning,
-    improvement,
     store,
+    learning: true,
+    improvement: { autonomy: 'validate', experimentsAvailable: false },
   });
-  const registered = evolution.register(agent);
-  // register(agent) returns the same instance (Object.is); it does not wrap or subclass.
-  if (!Object.is(registered, agent)) {
-    throw new Error('register(agent) must return the same agent reference');
-  }
 
   if (!readEnv('DATABASE_URL')) {
     console.log('skip: DATABASE_URL is not set; not connecting to PostgreSQL');
@@ -53,11 +33,10 @@ async function main(): Promise<void> {
     return;
   }
 
-  // A real SqlExecutor would wrap `pg` (or compatible) using DATABASE_URL.
-  // ARTIFACT_BUCKET holds skill blobs only — never Evolution transactional state.
   console.log(
     `Evolution Cloud Run wiring ready for ${agent.name}. Artifact bucket: ${readEnv('ARTIFACT_BUCKET') ?? '(unset)'}`,
   );
+  console.log(`applyToCall escape hatch: ${typeof evolution.applyToCall}`);
 }
 
 /** In-memory no-op executor so this example typechecks without a database driver. */

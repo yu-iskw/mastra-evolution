@@ -154,3 +154,4 @@ codeql-results.sarif
 
 # Local Evolution hobby store (examples)
 .evolution/
+.workspace/

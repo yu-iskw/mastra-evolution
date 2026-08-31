@@ -1,8 +1,14 @@
 # Local self-improvement example
 
-Attach Mastra Evolution with **learning and L4 bounded skill improvement** to an existing agent.
+Plug Mastra Evolution with **learning and L4 bounded skill improvement** into an existing Mastra `Agent`.
 
-The agent is a plain object `{ name: 'analytics-agent' }` — not a `SelfImprovingAgent` subclass.
+Uses model `google/gemini-flash-lite-latest` ([Google on Mastra](https://mastra.ai/models/providers/google)). Auth: `GEMINI_API_KEY` (mapped to `GOOGLE_GENERATIVE_AI_API_KEY` / `GOOGLE_API_KEY` at runtime). Do not commit API keys.
+
+Default run is **101 turns**. After an accepted procedure lesson, Evolution writes `SKILL.md` under the workspace `skills` path. Later turns must call `search_skills` / `load_skill` so the published skill is used in the same session (`SkillSearchProcessor` with `blockingRefresh: true`).
+
+The example **deletes** the sibling `.evolution/` store and `skills/` directory at start.
+
+Put `WORKSPACE_DIR` at `{run}/workspace` so lessons land in `{run}/.evolution`.
 
 ## Run
 
@@ -11,35 +17,24 @@ From the repository root:
 ```bash
 pnpm install
 pnpm build
-pnpm --filter @mastra-evolution/example-local-self-improvement start
+GEMINI_API_KEY=... pnpm --filter @mastra-evolution/example-local-self-improvement start
 ```
 
-Without `OPENAI_API_KEY` or `GOOGLE_GENERATIVE_AI_API_KEY`, `main()` prints a skip message and exits 0. It never calls a paid model API.
-
-## Evaluation: stub vs small model
-
-This example uses `createMastraEvaluator({ experimentsAvailable: false })` so it **typechecks without Mastra experiments**. The stub returns an inconclusive verdict and does not publish based on a real score.
-
-To evaluate with a small/cheap model:
-
-1. Enable Mastra datasets and experiments on the agent.
-2. Pass `createMastraEvaluator({ experimentsAvailable: true, run })` where `run` executes baseline vs candidate on a pinned dataset version (`MASTRA_CAPABILITIES.md`, KTD5).
-3. Keep `FilesystemSkillPublisher` for hobby `SKILL.md` writes under the local workspace.
-
-Do not treat the stub evaluator as a production gate.
+Without `GEMINI_API_KEY` (or `GOOGLE_API_KEY` / `GOOGLE_GENERATIVE_AI_API_KEY` / `OPENAI_API_KEY`), `main()` prints a skip message and exits 0.
 
 ## What it wires
 
-- `LocalEvolutionStore` under `EVOLUTION_DIR` (default `.evolution`)
-- `FilesystemSkillPublisher` under `$EVOLUTION_DIR/skills`
-- `createLearning` with autonomy `learn`
-- `createImprovement` with autonomy L4 (`auto-promote-bounded`)
-- `createMastraEvolution` + `register(agent)` (same object identity)
+- Existing `Agent` + `Workspace`, then `createMastraEvolution({ agent, workspace, learning: true, improvement: { autonomy: 'auto-promote-bounded' } })`
+- Bounded skill evaluator (hobby path when Mastra experiments are not wired)
+- Publisher writes `SKILL.md` on promote, then records a revision
+- Store: sibling `.evolution/` of the workspace filesystem
 
 ## Environment
 
-| Variable                       | Purpose                                                      |
-| ------------------------------ | ------------------------------------------------------------ |
-| `EVOLUTION_DIR`                | Local Evolution state directory (default `.evolution`)       |
-| `OPENAI_API_KEY`               | Optional; without this or the Google key, the example no-ops |
-| `GOOGLE_GENERATIVE_AI_API_KEY` | Optional; without this or the OpenAI key, the example no-ops |
+| Variable                       | Purpose                                          |
+| ------------------------------ | ------------------------------------------------ |
+| `GEMINI_API_KEY`               | Gemini API key (preferred)                       |
+| `GOOGLE_API_KEY`               | Mastra Google router key                         |
+| `GOOGLE_GENERATIVE_AI_API_KEY` | Alternate Mastra Google key                      |
+| `EVOLUTION_TURNS`              | Generate turns (default `101`)                   |
+| `WORKSPACE_DIR`                | Workspace filesystem root (default `.workspace`) |

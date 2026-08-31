@@ -19,19 +19,33 @@ Learning and improvement are independently enableable: you can persist lessons w
 | `@mastra-evolution/storage-postgres` | Multi-instance PostgreSQL store                               |
 | `@mastra-evolution/testing`          | Fakes and contract helpers                                    |
 
-Public attach API:
+Public attach API — existing Agent, then one factory call. Workspace appears once, on the Agent:
 
 ```ts
+const workspace = new Workspace({
+  id: 'analytics-workspace',
+  filesystem: new LocalFilesystem({ basePath: directory }),
+  skills: ['skills'],
+});
+
+const agent = new Agent({
+  id: 'analytics-agent',
+  model: 'openai/gpt-5.6-sol',
+  workspace,
+  memory, // whatever the app already uses
+});
+
 const evolution = createMastraEvolution({
   agent,
-  learning,
-  improvement,
-  store,
+  learning: true,
 });
-const registered = evolution.register(agent); // same instance (Object.is)
+
+await agent.generate('What is booked revenue?');
 ```
 
-`createLearning({ store, agentId, autonomy })` and `createImprovement({ store, evaluator, publisher, autonomy })` are optional runtimes you pass in. Hobby publish: `FilesystemSkillPublisher({ directory })` and `LocalEvolutionStore({ directory })`.
+The factory infers `agent.workspace`, merges `afterToolCall` into workspace `tools.hooks` when `setToolsConfig` exists, and infers a local store beside the workspace filesystem. There is no `forAgent()` spread and no `SelfImprovingAgent`.
+
+Self-improvement: pass `improvement: { autonomy: 'auto-promote-bounded' }` (skills write under the workspace `skills` path). `createLearning` / `createImprovement` remain advanced exports. `applyToCall` is an escape hatch for assigned/non-workspace tools. `register(agent)` is identity-only.
 
 **Supported Mastra:** `@mastra/core` `>=1.63.0 <2` (verified `1.63.2`). See [`MASTRA_CAPABILITIES.md`](MASTRA_CAPABILITIES.md).
 
@@ -47,12 +61,13 @@ pnpm --filter @mastra-evolution/example-local-learning start
 
 Without `OPENAI_API_KEY` or `GOOGLE_GENERATIVE_AI_API_KEY`, the example prints `skip` and exits 0. Default `pnpm test` does not call a paid API.
 
-That example enables **learning only** (`improvement: { enabled: false }`). For L4 skill improvement with a stub evaluator, see [`examples/local-self-improvement`](examples/local-self-improvement). For Cloud Run + PostgreSQL + artifact bucket, see [`examples/cloud-run-a2a`](examples/cloud-run-a2a).
+That example plugs **learning only** with `createMastraEvolution({ agent, learning: true })`. For L4 skill improvement with a stub evaluator, see [`examples/local-self-improvement`](examples/local-self-improvement). For Cloud Run + PostgreSQL + artifact bucket, see [`examples/cloud-run-a2a`](examples/cloud-run-a2a).
 
 ## Documentation
 
-- [`RFC.md`](RFC.md) — product origin
+- [`RFC.md`](RFC.md) — product origin (§23 public API, §38 DX)
 - [`MASTRA_CAPABILITIES.md`](MASTRA_CAPABILITIES.md) — verified Mastra surfaces
+- [`docs/adr/0001-agent-first-workspace-attach.md`](docs/adr/0001-agent-first-workspace-attach.md) — agent-first workspace attach
 - [`docs/plans/2026-08-31-001-feat-mastra-evolution-plan.md`](docs/plans/2026-08-31-001-feat-mastra-evolution-plan.md) — implementation plan
 - [`docs/architecture/control-plane.md`](docs/architecture/control-plane.md) — Evolution vs Mastra runtime
 - [`docs/architecture/cloud-run.md`](docs/architecture/cloud-run.md) — Postgres vs FUSE, multi-instance concurrency
@@ -115,6 +130,7 @@ pnpm format
 - `packages/` — library packages listed above
 - `examples/` — `local-learning`, `local-self-improvement`, `cloud-run-a2a`
 - `docs/architecture/` — control-plane and Cloud Run notes
+- `docs/adr/` — architecture decisions
 
 ## License
 

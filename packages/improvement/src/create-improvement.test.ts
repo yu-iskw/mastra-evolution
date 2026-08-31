@@ -68,6 +68,7 @@ describe('createImprovement', () => {
     const promoted = await runtime.promote(proposed.id);
     expect(promoted.status).toBe('published');
     expect(promoted.candidateRevision).toBe('rev-1');
+    expect(publisher.drafts).toHaveLength(1);
     expect(publisher.published).toHaveLength(1);
     expect(publisher.published[0]?.status).toBe('approved');
 

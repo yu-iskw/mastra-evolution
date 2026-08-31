@@ -4,6 +4,12 @@ Typechecked wiring for Mastra Evolution on Cloud Run. Instances share **PostgreS
 
 This example does **not** open a real database. `src/index.ts` uses a `SqlExecutor` stub so it compiles without `pg` or `@mastra/core`. Without `DATABASE_URL`, `main()` prints a skip message and returns.
 
+## What it wires
+
+- An existing agent stand-in, then `createMastraEvolution({ agent, store, learning: true, improvement: { autonomy: 'validate', experimentsAvailable: false } })`
+- PostgreSQL `EvolutionStore` (no hobby `.evolution/` filesystem)
+- `applyToCall` remains available as an escape hatch; the default plug still needs `agent.workspace` with `setToolsConfig` for workspace tools
+
 ## Architecture
 
 ```mermaid

@@ -74,7 +74,7 @@ flowchart TB
   Agent --> OBS
 ```
 
-Attach via `createMastraEvolution({ agent, learning, improvement, store }).register(agent)`. `register` returns the same instance (`Object.is`); there is no `SelfImprovingAgent`.
+Attach via `createMastraEvolution({ agent, learning: true })`. The factory infers `agent.workspace` and merges workspace `tools.hooks` so Studio and A2A turns still ingest without `applyToCall`. `register` returns the same instance (`Object.is`); there is no `SelfImprovingAgent`.
 
 ## Adapter boundary
 

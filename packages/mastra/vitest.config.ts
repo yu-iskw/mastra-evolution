@@ -11,6 +11,7 @@ export default defineProject({
       '@mastra-evolution/core': path.join(packageRoot, '../core/src/index.ts'),
       '@mastra-evolution/improvement': path.join(packageRoot, '../improvement/src/index.ts'),
       '@mastra-evolution/learning': path.join(packageRoot, '../learning/src/index.ts'),
+      '@mastra-evolution/storage-local': path.join(packageRoot, '../storage-local/src/index.ts'),
       '@mastra-evolution/testing': path.join(packageRoot, '../testing/src/index.ts'),
     },
   },
