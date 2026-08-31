@@ -134,4 +134,4 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Try Mastra peer install
-        run: bash dev/mastra-compat.sh ${{ matrix.mastra }}
+        run: node dev/mastra-compat.mjs ${{ matrix.mastra }}
