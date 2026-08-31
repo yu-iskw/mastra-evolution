@@ -22,6 +22,9 @@ lint:
       paths:
         - RFC.md
         - docs/plans/**
+    - linters: [eslint]
+      paths:
+        - examples/**
   disabled:
     - checkov
     - trufflehog

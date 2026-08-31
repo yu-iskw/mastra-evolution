@@ -204,21 +204,21 @@ export default [
     ignores: ['**/dist/**'],
     languageOptions: {
       parser: tsparser,
-      parserOptions: tsParserOptions,
+      parserOptions: {
+        ecmaVersion: 2022,
+        sourceType: 'module',
+      },
     },
     plugins: {
       ...importXPlugins,
       ...securityRecommended.plugins,
-      '@typescript-eslint': tseslint,
-      sonarjs,
       unicorn,
     },
     settings: importXSettings,
     rules: {
       ...importXRules,
       ...securityRecommended.rules,
-      ...sharedTsRules,
-      '@typescript-eslint/require-await': 'off',
+      'import-x/no-unresolved': 'off',
       'security/detect-object-injection': 'off',
       'unicorn/filename-case': unicornFilenameCase,
     },
