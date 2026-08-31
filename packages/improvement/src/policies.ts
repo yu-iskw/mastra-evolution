@@ -2,6 +2,8 @@ import {
   containsSensitiveText,
   isOrganizationScope,
   isPlainObject,
+  ownValue,
+  stringField,
 } from '@mastra-evolution/core';
 
 import type {
@@ -191,11 +193,13 @@ function occurrenceFromArtifact(artifact: unknown): number | undefined {
   if (!isPlainObject(artifact)) {
     return undefined;
   }
-  if (typeof artifact.occurrenceCount === 'number') {
-    return artifact.occurrenceCount;
+  const occurrenceCount = ownValue(artifact, 'occurrenceCount');
+  if (typeof occurrenceCount === 'number') {
+    return occurrenceCount;
   }
-  if (typeof artifact.occurrence === 'number') {
-    return artifact.occurrence;
+  const occurrence = ownValue(artifact, 'occurrence');
+  if (typeof occurrence === 'number') {
+    return occurrence;
   }
   return undefined;
 }
@@ -212,12 +216,7 @@ function textFromArtifact(artifact: unknown): string {
   if (!isPlainObject(artifact)) {
     return '';
   }
-  const parts: string[] = [];
-  if (typeof artifact.markdown === 'string') {
-    parts.push(artifact.markdown);
-  }
-  if (typeof artifact.name === 'string') {
-    parts.push(artifact.name);
-  }
-  return parts.join(' ');
+  return [stringField(artifact, 'markdown'), stringField(artifact, 'name')]
+    .filter((part) => part !== undefined)
+    .join(' ');
 }

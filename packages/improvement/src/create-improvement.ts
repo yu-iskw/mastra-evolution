@@ -3,9 +3,8 @@ import { parseAutonomy, slugSkillName } from '@mastra-evolution/core';
 import {
   defaultEnterprisePromotionPolicy,
   defaultHobbyPromotionPolicy,
-  LEARNING_ONLY_REASON,
   NON_SKILL_TARGET_REASON,
-  RECOMMEND_ONLY_REASON,
+  promotionDecisionForAutonomy,
 } from './policies';
 
 import type {
@@ -175,9 +174,12 @@ async function promoteProposal(
   proposalId: string,
 ): Promise<ImprovementProposal> {
   const proposal = await requireProposal(deps, proposalId);
-  const blocked = autonomyBlock(deps.autonomy);
-  if (blocked) {
-    return applyDecision(deps, proposal, blocked);
+  if (!requiresEvaluation(deps.autonomy)) {
+    return applyDecision(
+      deps,
+      proposal,
+      promotionDecisionForAutonomy(proposal, { autonomy: deps.autonomy }),
+    );
   }
   const evaluated: EvaluatedProposal =
     proposal.evaluation === undefined
@@ -306,19 +308,17 @@ async function publishApproved(
   return published;
 }
 
-function autonomyBlock(autonomy: AutonomyLevel): PromotionDecision | undefined {
+function requiresEvaluation(autonomy: AutonomyLevel): boolean {
   switch (autonomy) {
     case 0:
-    case 1: {
-      return { decision: 'reject', reason: LEARNING_ONLY_REASON };
-    }
+    case 1:
     case 2: {
-      return { decision: 'reject', reason: RECOMMEND_ONLY_REASON };
+      return false;
     }
     case 3:
     case 4:
     case 5: {
-      return undefined;
+      return true;
     }
     default: {
       const exhaustive: never = autonomy;
