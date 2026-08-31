@@ -2,7 +2,11 @@
   "name": "@mastra-evolution/core",
   "version": "0.1.0",
   "description": "Framework-neutral domain contracts for Mastra Evolution.",
-  "keywords": ["mastra", "evolution", "agents"],
+  "keywords": [
+    "mastra",
+    "evolution",
+    "agents"
+  ],
   "license": "Apache-2.0",
   "author": "",
   "main": "dist/index.js",
@@ -14,7 +18,9 @@
       "default": "./dist/index.js"
     }
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsc",
     "test": "vitest run"

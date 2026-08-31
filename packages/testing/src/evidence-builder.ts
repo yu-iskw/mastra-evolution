@@ -1,6 +1,13 @@
-import type { Evidence, EvolutionScope, EvidenceKind, EvidenceSource } from '@mastra-evolution/core';
+import type {
+  Evidence,
+  EvolutionScope,
+  EvidenceKind,
+  EvidenceSource,
+} from '@mastra-evolution/core';
 
-export function buildEvidence(overrides: Partial<Evidence> & { id: string; agentId: string }): Evidence {
+export function buildEvidence(
+  overrides: Partial<Evidence> & { id: string; agentId: string },
+): Evidence {
   const scope: EvolutionScope = overrides.scope ?? { type: 'resource', resourceId: 'alice' };
   const kind: EvidenceKind = overrides.kind ?? 'correction';
   const source: EvidenceSource = overrides.source ?? 'interaction';

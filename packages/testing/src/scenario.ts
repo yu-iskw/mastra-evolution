@@ -4,8 +4,10 @@ import type { EvolutionStore, EvolutionTelemetry } from '@mastra-evolution/core'
 
 export class RecordingTelemetry implements EvolutionTelemetry {
   readonly spans: string[] = [];
-  readonly records: Array<{ name: string; attributes?: Record<string, string | number | boolean> }> =
-    [];
+  readonly records: Array<{
+    name: string;
+    attributes?: Record<string, string | number | boolean>;
+  }> = [];
 
   async span<T>(name: string, run: () => Promise<T>): Promise<T> {
     this.spans.push(name);

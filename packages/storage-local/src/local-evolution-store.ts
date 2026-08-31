@@ -67,10 +67,10 @@ export class LocalEvolutionStore implements EvolutionStore {
     await this.runExclusive(async () => {
       await this.ensureOpenUnlocked();
       for (const [id, existing] of this.evidence.entries()) {
-          if (evidenceSharesSourceIdentity(existing, evidence)) {
-            this.evidence.delete(id);
-          }
+        if (evidenceSharesSourceIdentity(existing, evidence)) {
+          this.evidence.delete(id);
         }
+      }
       this.evidence.set(evidence.id, cloneEvidence(evidence));
       await this.persistEvidence();
     });

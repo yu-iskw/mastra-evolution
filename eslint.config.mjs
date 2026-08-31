@@ -31,7 +31,7 @@ const importXSettings = {
   'import-x/resolver': {
     typescript: {
       alwaysTryTypes: true,
-      project: ['packages/*/tsconfig.json'],
+      project: ['packages/*/tsconfig.json', 'examples/*/tsconfig.json'],
     },
     node: true,
   },
@@ -191,14 +191,35 @@ export default [
       ...securityRecommended.rules,
       ...sharedTsRules,
       ...vitestPlugin.configs.recommended.rules,
-      'vitest/expect-expect': [
-        'error',
-        { assertFunctionNames: ['expect', 'expectTypeOf'] },
-      ],
+      'vitest/expect-expect': ['error', { assertFunctionNames: ['expect', 'expectTypeOf'] }],
       // Tests often repeat string literals and use conditional expects; keep signal without noise.
       'vitest/no-conditional-expect': 'off',
       'sonarjs/no-duplicate-string': 'off',
       'max-lines-per-function': ['error', { max: 700 }],
+      'unicorn/filename-case': unicornFilenameCase,
+    },
+  },
+  {
+    files: ['examples/**/*.ts'],
+    ignores: ['**/dist/**'],
+    languageOptions: {
+      parser: tsparser,
+      parserOptions: tsParserOptions,
+    },
+    plugins: {
+      ...importXPlugins,
+      ...securityRecommended.plugins,
+      '@typescript-eslint': tseslint,
+      sonarjs,
+      unicorn,
+    },
+    settings: importXSettings,
+    rules: {
+      ...importXRules,
+      ...securityRecommended.rules,
+      ...sharedTsRules,
+      '@typescript-eslint/require-await': 'off',
+      'security/detect-object-injection': 'off',
       'unicorn/filename-case': unicornFilenameCase,
     },
   },

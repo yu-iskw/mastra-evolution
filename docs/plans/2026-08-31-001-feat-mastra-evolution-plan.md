@@ -303,20 +303,20 @@ Phase 0: U1–U3. Phase 1: U4–U5. Phase 2: U6. Phase 3: U7–U9. Phase 4: U10�
 
 ## Implementation Units
 
-| U-ID | Title | Files touched | Depends-on |
-| --- | --- | --- | --- |
-| U1 | Monorepo and core contracts | `package.json`, `packages/*`, `pnpm-workspace.yaml` | — |
-| U2 | Testing harness | `packages/testing` | U1 |
-| U3 | Local Evolution store | `packages/storage-local` | U1, U2 |
-| U4 | Mastra adapter skeleton | `packages/mastra`, `MASTRA_CAPABILITIES.md` | U1, U2 |
-| U5 | Evidence ingestion and lessons | `packages/learning` | U2, U3, U4 |
-| U6 | Skill draft and publish | `packages/learning`, `packages/mastra` | U5 |
-| U7 | Datasets and experiments | `packages/improvement`, `packages/mastra` | U5, U6 |
-| U8 | Promotion, autonomy, rollback | `packages/improvement`, `packages/core` | U7 |
-| U9 | Presets and public factories | `packages/presets`, `packages/mastra` | U5, U8 |
-| U10 | Postgres and concurrency | `packages/storage-postgres` | U3, U8 |
-| U11 | Approval and enterprise policy | `packages/improvement`, `packages/presets` | U8, U10 |
-| U12 | Examples, CI, docs | `examples/*`, `.github/workflows/*`, `docs/architecture/*` | U9, U11 |
+| U-ID | Title                          | Files touched                                              | Depends-on |
+| ---- | ------------------------------ | ---------------------------------------------------------- | ---------- |
+| U1   | Monorepo and core contracts    | `package.json`, `packages/*`, `pnpm-workspace.yaml`        | —          |
+| U2   | Testing harness                | `packages/testing`                                         | U1         |
+| U3   | Local Evolution store          | `packages/storage-local`                                   | U1, U2     |
+| U4   | Mastra adapter skeleton        | `packages/mastra`, `MASTRA_CAPABILITIES.md`                | U1, U2     |
+| U5   | Evidence ingestion and lessons | `packages/learning`                                        | U2, U3, U4 |
+| U6   | Skill draft and publish        | `packages/learning`, `packages/mastra`                     | U5         |
+| U7   | Datasets and experiments       | `packages/improvement`, `packages/mastra`                  | U5, U6     |
+| U8   | Promotion, autonomy, rollback  | `packages/improvement`, `packages/core`                    | U7         |
+| U9   | Presets and public factories   | `packages/presets`, `packages/mastra`                      | U5, U8     |
+| U10  | Postgres and concurrency       | `packages/storage-postgres`                                | U3, U8     |
+| U11  | Approval and enterprise policy | `packages/improvement`, `packages/presets`                 | U8, U10    |
+| U12  | Examples, CI, docs             | `examples/*`, `.github/workflows/*`, `docs/architecture/*` | U9, U11    |
 
 ### U1. Monorepo and core contracts
 
@@ -508,16 +508,16 @@ Phase 0: U1–U3. Phase 1: U4–U5. Phase 2: U6. Phase 3: U7–U9. Phase 4: U10�
 
 ## Verification Contract
 
-| Gate | Command | Applies |
-| --- | --- | --- |
-| Unit/integration | `pnpm test` | All feature units |
-| Types/build | `pnpm build` | After U1 |
-| Lint | `pnpm lint:eslint` and `pnpm lint` | Before merge |
-| Unused surface | `pnpm knip` | After package adds |
-| Coverage floors | existing Vitest thresholds in `vitest.config.ts` | Domain packages |
-| Mastra compatibility | CI matrix min + latest supported `@mastra/core` / `@mastra/memory` | U4 onward |
-| Example compile | workspace script or `pnpm --filter './examples/**' build` | U12 |
-| Vertical slice | AE1–AE7 via unit/scenario tests; U12 example for the happy path | Release |
+| Gate                 | Command                                                            | Applies            |
+| -------------------- | ------------------------------------------------------------------ | ------------------ |
+| Unit/integration     | `pnpm test`                                                        | All feature units  |
+| Types/build          | `pnpm build`                                                       | After U1           |
+| Lint                 | `pnpm lint:eslint` and `pnpm lint`                                 | Before merge       |
+| Unused surface       | `pnpm knip`                                                        | After package adds |
+| Coverage floors      | existing Vitest thresholds in `vitest.config.ts`                   | Domain packages    |
+| Mastra compatibility | CI matrix min + latest supported `@mastra/core` / `@mastra/memory` | U4 onward          |
+| Example compile      | workspace script or `pnpm --filter './examples/**' build`          | U12                |
+| Vertical slice       | AE1–AE7 via unit/scenario tests; U12 example for the happy path    | Release            |
 
 Do not require a live paid model in default `pnpm test`. Adapter tests that need Mastra packages use the pinned versions in the workspace.
 
@@ -551,15 +551,15 @@ Do not require a live paid model in default `pnpm test`. Adapter tests that need
 
 ## Risks & Dependencies
 
-| Risk | Mitigation |
-| --- | --- |
-| Mastra API churn | Adapter boundary, capability probes, compatibility CI, `MASTRA_CAPABILITIES.md` |
-| Extractors fire too rarely for learning | Document OM cycle behavior; fallback hooks/feedback; preset OM thresholds |
-| Experiments do not forward memory | Inline task + pre-created threads (KTD5) |
-| Learning poisons skills | Scope, thresholds, non-learnable security, eval gates, rollback |
-| Hobby UX becomes enterprise-heavy | Local preset, no required queue/vector DB |
-| GCS FUSE used as a database | KTD6; Cloud Run example warns |
-| Duplicate Mastra features later | RFC Risk 6 rule in Goal Capsule authority |
+| Risk                                    | Mitigation                                                                      |
+| --------------------------------------- | ------------------------------------------------------------------------------- |
+| Mastra API churn                        | Adapter boundary, capability probes, compatibility CI, `MASTRA_CAPABILITIES.md` |
+| Extractors fire too rarely for learning | Document OM cycle behavior; fallback hooks/feedback; preset OM thresholds       |
+| Experiments do not forward memory       | Inline task + pre-created threads (KTD5)                                        |
+| Learning poisons skills                 | Scope, thresholds, non-learnable security, eval gates, rollback                 |
+| Hobby UX becomes enterprise-heavy       | Local preset, no required queue/vector DB                                       |
+| GCS FUSE used as a database             | KTD6; Cloud Run example warns                                                   |
+| Duplicate Mastra features later         | RFC Risk 6 rule in Goal Capsule authority                                       |
 
 ---
 

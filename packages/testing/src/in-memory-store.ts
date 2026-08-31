@@ -58,13 +58,13 @@ export class InMemoryEvolutionStore implements EvolutionStore {
 
   getLesson(id: string): Promise<Lesson | undefined> {
     const lesson = this.lessons.get(id);
-    return Promise.resolve(lesson ? { ...lesson, evidenceIds: [...lesson.evidenceIds] } : undefined);
+    return Promise.resolve(
+      lesson ? { ...lesson, evidenceIds: [...lesson.evidenceIds] } : undefined,
+    );
   }
 
   findLessons(query: LessonQuery): Promise<Lesson[]> {
-    return Promise.resolve(
-      [...this.lessons.values()].filter((item) => matchesLesson(item, query)),
-    );
+    return Promise.resolve([...this.lessons.values()].filter((item) => matchesLesson(item, query)));
   }
 
   putProposal(proposal: ImprovementProposal): Promise<void> {

@@ -12,12 +12,7 @@ export type LessonKind =
 export type LessonStatus = 'candidate' | 'accepted' | 'rejected' | 'superseded';
 
 export type SuggestedAction =
-  | 'memory'
-  | 'create-skill'
-  | 'update-skill'
-  | 'instruction-change'
-  | 'workflow-change'
-  | 'none';
+  'memory' | 'create-skill' | 'update-skill' | 'instruction-change' | 'workflow-change' | 'none';
 
 export interface LessonValidity {
   validFrom?: Date;

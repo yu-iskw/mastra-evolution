@@ -35,9 +35,7 @@ export interface EvolutionPublisher {
   rollback?(proposal: ImprovementProposal): Promise<PublishedRevision>;
 }
 
-export type ApprovalDecision =
-  | { decision: 'approved' }
-  | { decision: 'rejected'; reason: string };
+export type ApprovalDecision = { decision: 'approved' } | { decision: 'rejected'; reason: string };
 
 export interface ApprovalProvider {
   requestApproval(proposal: ImprovementProposal): Promise<ApprovalDecision>;
@@ -66,10 +64,7 @@ export interface PromotionPolicy {
 }
 
 export interface ScopePromotionPolicy {
-  canPromoteToOrganization(input: {
-    agentId: string;
-    independentSourceCount: number;
-  }): boolean;
+  canPromoteToOrganization(input: { agentId: string; independentSourceCount: number }): boolean;
 }
 
 export interface EvolutionTelemetry {

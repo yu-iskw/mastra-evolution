@@ -87,13 +87,11 @@ describe('core contracts', () => {
   });
 
   it('keys scopes without colliding across types', () => {
-    expect(
-      scopesEqual({ type: 'agent', agentId: 'a' }, { type: 'agent', agentId: 'a' }),
-    ).toBe(true);
-    expect(scopeKey({ type: 'thread', threadId: 't' })).toBe('thread:t');
-    expect(scopeKey({ type: 'organization', organizationId: 'o' })).toBe(
-      'organization:o',
+    expect(scopesEqual({ type: 'agent', agentId: 'a' }, { type: 'agent', agentId: 'a' })).toBe(
+      true,
     );
+    expect(scopeKey({ type: 'thread', threadId: 't' })).toBe('thread:t');
+    expect(scopeKey({ type: 'organization', organizationId: 'o' })).toBe('organization:o');
     expect(isOrganizationScope({ type: 'organization', organizationId: 'o' })).toBe(true);
     expect(isOrganizationScope({ type: 'agent', agentId: 'a' })).toBe(false);
   });

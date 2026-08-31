@@ -1,12 +1,7 @@
 export type AutonomyLevel = 0 | 1 | 2 | 3 | 4 | 5;
 
 export type AutonomyName =
-  | 'observe'
-  | 'learn'
-  | 'recommend'
-  | 'validate'
-  | 'auto-promote-bounded'
-  | 'autonomous';
+  'observe' | 'learn' | 'recommend' | 'validate' | 'auto-promote-bounded' | 'autonomous';
 
 export function autonomyLevel(name: AutonomyName): AutonomyLevel {
   switch (name) {

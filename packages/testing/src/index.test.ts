@@ -76,6 +76,8 @@ describe('testing harness', () => {
   });
 
   it('satisfies the store contract', async () => {
-    await expect(runEvolutionStoreContract(() => new InMemoryEvolutionStore())).resolves.toBeUndefined();
+    await expect(
+      runEvolutionStoreContract(() => new InMemoryEvolutionStore()),
+    ).resolves.toBeUndefined();
   });
 });

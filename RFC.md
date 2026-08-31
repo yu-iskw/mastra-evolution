@@ -179,32 +179,32 @@ This is the wrong boundary.
 
 Mastra already provides or substantially addresses:
 
-| Concern | Mastra capability | Mastra Evolution ownership |
-|---|---|---|
-| Conversation persistence | Memory | No |
-| Long-term compressed context | Observational Memory | No |
-| Structured extraction | Memory Extractors | No |
-| Procedural artifacts | Skills | No format duplication |
-| Skill retrieval | `SkillSearchProcessor` | No |
-| Workspace filesystem | Workspace | No |
-| Skill/workspace persistence | Mastra storage domains | No |
-| Evaluation | Scorers | No |
-| Regression cases | Datasets | No |
-| Candidate comparison | Experiments | No |
-| Tool interception | Tool hooks/processors | No |
-| A2A | Mastra A2A | No |
-| Authorization | Mastra auth/FGA | No |
-| Observability | Mastra observability/OTel | No |
-| Long-running execution | Workflows | No |
-| Dynamic workflow definitions | Dynamic workflows | No |
-| Token limits | Token limiter processors | No |
-| Sandbox/filesystem | Workspace/Sandbox | No |
-| Evidence → lesson | Not a complete native lifecycle | **Yes** |
-| Lesson aggregation | Not a complete native lifecycle | **Yes** |
-| Improvement proposal | Not a complete native lifecycle | **Yes** |
-| Promotion policy | Not a complete native lifecycle | **Yes** |
-| Evolution provenance | Partial infrastructure only | **Yes** |
-| Autonomy policy | Not a complete native lifecycle | **Yes** |
+| Concern                      | Mastra capability               | Mastra Evolution ownership |
+| ---------------------------- | ------------------------------- | -------------------------- |
+| Conversation persistence     | Memory                          | No                         |
+| Long-term compressed context | Observational Memory            | No                         |
+| Structured extraction        | Memory Extractors               | No                         |
+| Procedural artifacts         | Skills                          | No format duplication      |
+| Skill retrieval              | `SkillSearchProcessor`          | No                         |
+| Workspace filesystem         | Workspace                       | No                         |
+| Skill/workspace persistence  | Mastra storage domains          | No                         |
+| Evaluation                   | Scorers                         | No                         |
+| Regression cases             | Datasets                        | No                         |
+| Candidate comparison         | Experiments                     | No                         |
+| Tool interception            | Tool hooks/processors           | No                         |
+| A2A                          | Mastra A2A                      | No                         |
+| Authorization                | Mastra auth/FGA                 | No                         |
+| Observability                | Mastra observability/OTel       | No                         |
+| Long-running execution       | Workflows                       | No                         |
+| Dynamic workflow definitions | Dynamic workflows               | No                         |
+| Token limits                 | Token limiter processors        | No                         |
+| Sandbox/filesystem           | Workspace/Sandbox               | No                         |
+| Evidence → lesson            | Not a complete native lifecycle | **Yes**                    |
+| Lesson aggregation           | Not a complete native lifecycle | **Yes**                    |
+| Improvement proposal         | Not a complete native lifecycle | **Yes**                    |
+| Promotion policy             | Not a complete native lifecycle | **Yes**                    |
+| Evolution provenance         | Partial infrastructure only     | **Yes**                    |
+| Autonomy policy              | Not a complete native lifecycle | **Yes**                    |
 
 The library should therefore orchestrate Mastra primitives rather than duplicate them.
 
@@ -615,11 +615,11 @@ Provides:
 
 ```ts
 export type EvolutionScope =
-  | { type: "thread"; threadId: string }
-  | { type: "resource"; resourceId: string }
-  | { type: "team"; teamId: string }
-  | { type: "agent"; agentId: string }
-  | { type: "organization"; organizationId: string };
+  | { type: 'thread'; threadId: string }
+  | { type: 'resource'; resourceId: string }
+  | { type: 'team'; teamId: string }
+  | { type: 'agent'; agentId: string }
+  | { type: 'organization'; organizationId: string };
 ```
 
 Scope must always be explicit for durable lessons.
@@ -633,23 +633,23 @@ export interface Evidence {
   scope: EvolutionScope;
 
   source:
-    | "interaction"
-    | "feedback"
-    | "tool-call"
-    | "tool-result"
-    | "trace"
-    | "memory-extractor"
-    | "evaluation";
+    | 'interaction'
+    | 'feedback'
+    | 'tool-call'
+    | 'tool-result'
+    | 'trace'
+    | 'memory-extractor'
+    | 'evaluation';
 
   kind:
-    | "correction"
-    | "success"
-    | "failure"
-    | "preference"
-    | "fact"
-    | "procedure"
-    | "missing-capability"
-    | "policy-signal";
+    | 'correction'
+    | 'success'
+    | 'failure'
+    | 'preference'
+    | 'fact'
+    | 'procedure'
+    | 'missing-capability'
+    | 'policy-signal';
 
   summary: string;
 
@@ -676,13 +676,13 @@ export interface Lesson {
   scope: EvolutionScope;
 
   kind:
-    | "fact"
-    | "preference"
-    | "procedure"
-    | "correction"
-    | "failure-pattern"
-    | "success-pattern"
-    | "missing-capability";
+    | 'fact'
+    | 'preference'
+    | 'procedure'
+    | 'correction'
+    | 'failure-pattern'
+    | 'success-pattern'
+    | 'missing-capability';
 
   statement: string;
 
@@ -694,19 +694,10 @@ export interface Lesson {
   firstObservedAt: Date;
   lastObservedAt: Date;
 
-  status:
-    | "candidate"
-    | "accepted"
-    | "rejected"
-    | "superseded";
+  status: 'candidate' | 'accepted' | 'rejected' | 'superseded';
 
   suggestedAction?:
-    | "memory"
-    | "create-skill"
-    | "update-skill"
-    | "instruction-change"
-    | "workflow-change"
-    | "none";
+    'memory' | 'create-skill' | 'update-skill' | 'instruction-change' | 'workflow-change' | 'none';
 }
 ```
 
@@ -724,10 +715,10 @@ export interface ImprovementProposal {
   evidenceIds: string[];
 
   target:
-    | { type: "skill"; skillId?: string }
-    | { type: "instructions" }
-    | { type: "workflow"; workflowId: string }
-    | { type: "tool-policy"; toolId?: string };
+    | { type: 'skill'; skillId?: string }
+    | { type: 'instructions' }
+    | { type: 'workflow'; workflowId: string }
+    | { type: 'tool-policy'; toolId?: string };
 
   baselineRevision?: string;
 
@@ -737,17 +728,17 @@ export interface ImprovementProposal {
     baselineScore?: number;
     candidateScore?: number;
     regressions: string[];
-    verdict: "pass" | "fail" | "inconclusive";
+    verdict: 'pass' | 'fail' | 'inconclusive';
   };
 
   status:
-    | "draft"
-    | "evaluating"
-    | "awaiting-approval"
-    | "approved"
-    | "rejected"
-    | "published"
-    | "rolled-back";
+    | 'draft'
+    | 'evaluating'
+    | 'awaiting-approval'
+    | 'approved'
+    | 'rejected'
+    | 'published'
+    | 'rolled-back';
 
   createdAt: Date;
   updatedAt: Date;
@@ -765,12 +756,12 @@ Suggested schema:
 ```ts
 export const learningSignalSchema = z.object({
   kind: z.enum([
-    "correction",
-    "preference",
-    "failure",
-    "success",
-    "procedure",
-    "missing-capability",
+    'correction',
+    'preference',
+    'failure',
+    'success',
+    'procedure',
+    'missing-capability',
   ]),
 
   summary: z.string(),
@@ -778,21 +769,15 @@ export const learningSignalSchema = z.object({
   importance: z.number().min(0).max(1),
   confidence: z.number().min(0).max(1),
 
-  suggestedScope: z.enum([
-    "thread",
-    "resource",
-    "team",
-    "agent",
-    "organization",
-  ]),
+  suggestedScope: z.enum(['thread', 'resource', 'team', 'agent', 'organization']),
 
   suggestedAction: z.enum([
-    "retain",
-    "create-skill",
-    "update-skill",
-    "instruction-change",
-    "workflow-change",
-    "none",
+    'retain',
+    'create-skill',
+    'update-skill',
+    'instruction-change',
+    'workflow-change',
+    'none',
   ]),
 });
 ```
@@ -956,14 +941,14 @@ This prevents the self-improvement loop from forgetting previously solved produc
 
 The library should use explicit autonomy levels rather than a boolean `selfImproving: true`.
 
-| Level | Name | Behavior |
-|---|---|---|
-| L0 | Observe | Capture evidence only |
-| L1 | Learn | Create/aggregate lessons |
-| L2 | Recommend | Generate candidate changes only |
-| L3 | Validate | Generate and evaluate changes; require approval |
-| L4 | Auto-Promote Bounded | Automatically publish allowed artifact classes after gates |
-| L5 | Autonomous Evolution | Broad automatic modification |
+| Level | Name                 | Behavior                                                   |
+| ----- | -------------------- | ---------------------------------------------------------- |
+| L0    | Observe              | Capture evidence only                                      |
+| L1    | Learn                | Create/aggregate lessons                                   |
+| L2    | Recommend            | Generate candidate changes only                            |
+| L3    | Validate             | Generate and evaluate changes; require approval            |
+| L4    | Auto-Promote Bounded | Automatically publish allowed artifact classes after gates |
+| L5    | Autonomous Evolution | Broad automatic modification                               |
 
 Recommended defaults:
 
@@ -990,14 +975,14 @@ Recommended defaults:
 
 Recommended implementation order:
 
-| Phase | Target | Default automation |
-|---|---|---|
-| v0.1 | Skill creation/update | Bounded |
-| v0.2 | Few-shot examples / prompt fragments | Governed |
-| v0.3 | Agent instructions | Governed |
-| v0.4 | Dynamic workflow definitions | Governed |
-| v0.5 | Tool-selection policies | Strictly governed |
-| Future | Source-code PR generation | Human merge required |
+| Phase  | Target                               | Default automation   |
+| ------ | ------------------------------------ | -------------------- |
+| v0.1   | Skill creation/update                | Bounded              |
+| v0.2   | Few-shot examples / prompt fragments | Governed             |
+| v0.3   | Agent instructions                   | Governed             |
+| v0.4   | Dynamic workflow definitions         | Governed             |
+| v0.5   | Tool-selection policies              | Strictly governed    |
+| Future | Source-code PR generation            | Human merge required |
 
 The MVP SHALL NOT automatically modify:
 
@@ -1087,13 +1072,13 @@ Preferred direction:
 
 ```ts
 const learning = createLearning({
-  agentId: "analytics-agent",
-  autonomy: "learn",
+  agentId: 'analytics-agent',
+  autonomy: 'learn',
 });
 
 const improvement = createImprovement({
-  agentId: "analytics-agent",
-  autonomy: "validate",
+  agentId: 'analytics-agent',
+  autonomy: 'validate',
 });
 ```
 
@@ -1154,9 +1139,7 @@ export interface ImprovementEvaluator {
 
 ```ts
 export interface EvolutionPublisher {
-  publish(
-    proposal: ApprovedImprovementProposal,
-  ): Promise<PublishedRevision>;
+  publish(proposal: ApprovedImprovementProposal): Promise<PublishedRevision>;
 }
 ```
 
@@ -1164,9 +1147,7 @@ export interface EvolutionPublisher {
 
 ```ts
 export interface ApprovalProvider {
-  requestApproval(
-    proposal: ImprovementProposal,
-  ): Promise<ApprovalDecision>;
+  requestApproval(proposal: ImprovementProposal): Promise<ApprovalDecision>;
 }
 ```
 
@@ -1500,9 +1481,9 @@ export interface PromotionPolicy {
     evaluation: ImprovementEvaluation,
     context: PromotionContext,
   ): Promise<
-    | { decision: "publish" }
-    | { decision: "request-approval"; reason: string }
-    | { decision: "reject"; reason: string }
+    | { decision: 'publish' }
+    | { decision: 'request-approval'; reason: string }
+    | { decision: 'reject'; reason: string }
   >;
 }
 ```
@@ -1663,8 +1644,8 @@ const evolution = createMastraEvolution({
   },
   improvement: {
     enabled: true,
-    autonomy: "validate",
-    targets: ["skill"],
+    autonomy: 'validate',
+    targets: ['skill'],
   },
 });
 ```
@@ -1794,13 +1775,13 @@ Support as a deployment pattern through the same ports later, not as the core re
 
 # 40. Decision Matrix
 
-| Approach | Mastra Alignment | Upgrade Resilience | Learning Quality | Hobby UX | Enterprise Governance | Extensibility | Weighted Result |
-|---|---:|---:|---:|---:|---:|---:|---:|
-| Hermes port | 30 | 45 | 83 | 75 | 65 | 85 | 61 |
-| Agent wrapper | 72 | 50 | 79 | 95 | 67 | 70 | 72 |
-| Processor-only | 92 | 83 | 72 | 89 | 78 | 78 | 82 |
-| **Evolution runtime** | **97** | **91** | **96** | **91** | **96** | **96** | **94** |
-| Central service | 83 | 90 | 95 | 25 | 99 | 99 | 80 |
+| Approach              | Mastra Alignment | Upgrade Resilience | Learning Quality | Hobby UX | Enterprise Governance | Extensibility | Weighted Result |
+| --------------------- | ---------------: | -----------------: | ---------------: | -------: | --------------------: | ------------: | --------------: |
+| Hermes port           |               30 |                 45 |               83 |       75 |                    65 |            85 |              61 |
+| Agent wrapper         |               72 |                 50 |               79 |       95 |                    67 |            70 |              72 |
+| Processor-only        |               92 |                 83 |               72 |       89 |                    78 |            78 |              82 |
+| **Evolution runtime** |           **97** |             **91** |           **96** |   **91** |                **96** |        **96** |          **94** |
+| Central service       |               83 |                 90 |               95 |       25 |                    99 |            99 |              80 |
 
 Weights assumed:
 

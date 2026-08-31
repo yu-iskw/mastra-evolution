@@ -1,4 +1,8 @@
-import type { ApprovalDecision, ApprovalProvider, ImprovementProposal } from '@mastra-evolution/core';
+import type {
+  ApprovalDecision,
+  ApprovalProvider,
+  ImprovementProposal,
+} from '@mastra-evolution/core';
 
 export class ImmediateApprovalProvider implements ApprovalProvider {
   constructor(private readonly decision: ApprovalDecision = { decision: 'approved' }) {}
