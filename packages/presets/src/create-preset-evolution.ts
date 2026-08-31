@@ -15,7 +15,7 @@ import type { ImprovementRuntime } from '@mastra-evolution/improvement';
 import type { LearningRuntime } from '@mastra-evolution/learning';
 import type { MastraEvolution } from '@mastra-evolution/mastra';
 
-export function resolvePresetEvaluator(
+function resolvePresetEvaluator(
   options: Pick<SharedImprovementPresetOptions, 'evaluator' | 'experimentsAvailable'>,
 ): ImprovementEvaluator {
   return (

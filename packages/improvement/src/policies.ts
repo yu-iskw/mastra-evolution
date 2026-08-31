@@ -15,8 +15,8 @@ import type {
   ScopePromotionPolicy,
 } from '@mastra-evolution/core';
 
-export const LEARNING_ONLY_REASON = 'learning-only';
-export const RECOMMEND_ONLY_REASON = 'recommend-only';
+const LEARNING_ONLY_REASON = 'learning-only';
+const RECOMMEND_ONLY_REASON = 'recommend-only';
 export const NON_SKILL_TARGET_REASON = 'only skills may be auto-promoted';
 
 const INCONCLUSIVE_REASON = 'inconclusive';
