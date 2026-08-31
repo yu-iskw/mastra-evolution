@@ -1,3 +1,5 @@
+import { proposalUpsertConflicts } from '@mastra-evolution/core';
+
 import { SQL } from './sql';
 
 import type { SqlExecutor } from './sql';
@@ -24,8 +26,6 @@ interface EventRow extends PayloadRow {
 }
 
 type Handler = (params: readonly unknown[]) => Record<string, unknown>[];
-
-const PUBLISHED = 'published';
 
 /**
  * In-process executor used by unit tests (unique keys + version column).
@@ -142,15 +142,7 @@ class MemorySqlExecutor implements SqlExecutor {
     const status = asString(params[2]);
     const payload = asString(params[3]);
     const existing = this.proposals.get(id);
-    if (existing && existing.version > version) {
-      return [];
-    }
-    if (
-      existing &&
-      existing.status === PUBLISHED &&
-      status === PUBLISHED &&
-      existing.version === version
-    ) {
+    if (proposalUpsertConflicts(existing, { version, status })) {
       return [];
     }
     this.proposals.set(id, { id, version, status, payload });

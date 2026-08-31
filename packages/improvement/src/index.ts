@@ -7,6 +7,7 @@ export {
   defaultHobbyPromotionPolicy,
   evidenceThresholdPolicy,
   independentUsersScopePromotionPolicy,
+  promotionDecisionForAutonomy,
   regressionPolicy,
   scopePolicy,
   securityPolicy,

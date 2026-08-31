@@ -4,7 +4,10 @@ import path from 'node:path';
 
 import { describe, expect, expectTypeOf, it } from 'vitest';
 
-import { scopeKey, scopesEqual } from './scope';
+import { proposalUpsertConflicts } from './proposal-write';
+import { matchesEvidence, matchesLesson } from './query-match';
+import { isOrganizationScope, scopeKey, scopesEqual } from './scope';
+import { MAX_SKILL_NAME_LENGTH, slugSkillName } from './skill-name';
 
 import type { Lesson } from './lesson';
 import type { EvolutionStore } from './ports';
@@ -62,6 +65,9 @@ describe('core contracts', () => {
       appendEvent() {
         return Promise.resolve();
       },
+      findEvents() {
+        return Promise.resolve([]);
+      },
     };
 
     await store.putLesson(lesson);
@@ -88,5 +94,60 @@ describe('core contracts', () => {
     expect(scopeKey({ type: 'organization', organizationId: 'o' })).toBe(
       'organization:o',
     );
+    expect(isOrganizationScope({ type: 'organization', organizationId: 'o' })).toBe(true);
+    expect(isOrganizationScope({ type: 'agent', agentId: 'a' })).toBe(false);
+  });
+
+  it('matches evidence and lessons by query fields', () => {
+    const evidence = {
+      id: 'ev-1',
+      agentId: 'analytics-agent',
+      scope: { type: 'resource' as const, resourceId: 'alice' },
+      source: 'interaction' as const,
+      kind: 'correction' as const,
+      summary: 'booked revenue',
+      provenance: { sourceIdentity: 'src-1' },
+      observedAt: new Date('2026-08-31T00:00:00.000Z'),
+    };
+    expect(matchesEvidence(evidence, { agentId: 'analytics-agent', sourceIdentity: 'src-1' })).toBe(
+      true,
+    );
+    expect(matchesEvidence(evidence, { agentId: 'other' })).toBe(false);
+    const lesson: Lesson = {
+      id: 'lesson-1',
+      agentId: 'analytics-agent',
+      scope: { type: 'resource', resourceId: 'alice' },
+      kind: 'correction',
+      statement: 'booked revenue',
+      evidenceIds: ['ev-1'],
+      confidence: 0.4,
+      occurrenceCount: 1,
+      firstObservedAt: evidence.observedAt,
+      lastObservedAt: evidence.observedAt,
+      status: 'candidate',
+    };
+    expect(matchesLesson(lesson, { status: 'candidate', kind: 'correction' })).toBe(true);
+    expect(matchesLesson(lesson, { status: 'accepted' })).toBe(false);
+  });
+
+  it('detects conflicting published proposal writes', () => {
+    expect(
+      proposalUpsertConflicts(
+        { version: 1, status: 'published' },
+        { version: 1, status: 'published' },
+      ),
+    ).toBe(true);
+    expect(
+      proposalUpsertConflicts({ version: 1, status: 'draft' }, { version: 1, status: 'draft' }),
+    ).toBe(false);
+  });
+
+  it('slugs skill names from the first words of a statement', () => {
+    expect(slugSkillName('Use booked revenue excluding cancellations.')).toBe(
+      'use-booked-revenue-excluding-cancellations',
+    );
+    expect(slugSkillName('???', 'skill-fallback')).toBe('skill-fallback');
+    expect(slugSkillName('???')).toBe('');
+    expect(MAX_SKILL_NAME_LENGTH).toBe(64);
   });
 });

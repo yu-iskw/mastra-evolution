@@ -1,4 +1,4 @@
-import { VersionConflictError, scopesEqual } from '@mastra-evolution/core';
+import { VersionConflictError, matchesEvidence, matchesLesson } from '@mastra-evolution/core';
 
 import {
   deserializeEvent,
@@ -112,39 +112,4 @@ export class PostgresEvolutionStore implements EvolutionStore {
     }
     return revive(rows[0].payload);
   }
-}
-
-function matchesEvidence(item: Evidence, query: EvidenceQuery): boolean {
-  if (query.agentId && item.agentId !== query.agentId) {
-    return false;
-  }
-  if (query.kind && item.kind !== query.kind) {
-    return false;
-  }
-  if (query.sourceIdentity && item.provenance.sourceIdentity !== query.sourceIdentity) {
-    return false;
-  }
-  if (query.scope && !scopesEqual(item.scope, query.scope)) {
-    return false;
-  }
-  return true;
-}
-
-function matchesLesson(item: Lesson, query: LessonQuery): boolean {
-  if (query.agentId && item.agentId !== query.agentId) {
-    return false;
-  }
-  if (query.status && item.status !== query.status) {
-    return false;
-  }
-  if (query.kind && item.kind !== query.kind) {
-    return false;
-  }
-  if (query.statement && item.statement !== query.statement) {
-    return false;
-  }
-  if (query.scope && !scopesEqual(item.scope, query.scope)) {
-    return false;
-  }
-  return true;
 }

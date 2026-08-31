@@ -2,7 +2,12 @@
 import { mkdir } from 'node:fs/promises';
 import path from 'node:path';
 
-import { VersionConflictError, scopesEqual } from '@mastra-evolution/core';
+import {
+  assertProposalWriteAllowed,
+  evidenceSharesSourceIdentity,
+  matchesEvidence,
+  matchesLesson,
+} from '@mastra-evolution/core';
 
 import { readJsonFile, writeJsonAtomic } from './atomic-json';
 
@@ -61,17 +66,11 @@ export class LocalEvolutionStore implements EvolutionStore {
   async putEvidence(evidence: Evidence): Promise<void> {
     await this.runExclusive(async () => {
       await this.ensureOpenUnlocked();
-      const identity = evidence.provenance.sourceIdentity;
-      if (identity) {
-        for (const [id, existing] of this.evidence.entries()) {
-          if (
-            existing.provenance.sourceIdentity === identity &&
-            existing.agentId === evidence.agentId
-          ) {
+      for (const [id, existing] of this.evidence.entries()) {
+          if (evidenceSharesSourceIdentity(existing, evidence)) {
             this.evidence.delete(id);
           }
         }
-      }
       this.evidence.set(evidence.id, cloneEvidence(evidence));
       await this.persistEvidence();
     });
@@ -115,17 +114,7 @@ export class LocalEvolutionStore implements EvolutionStore {
     await this.runExclusive(async () => {
       await this.ensureOpenUnlocked();
       const existing = this.proposals.get(proposal.id);
-      if (existing && proposal.version < existing.version) {
-        throw new VersionConflictError();
-      }
-      if (
-        existing &&
-        existing.status === 'published' &&
-        proposal.status === 'published' &&
-        proposal.version === existing.version
-      ) {
-        throw new VersionConflictError();
-      }
+      assertProposalWriteAllowed(existing, proposal);
       this.proposals.set(proposal.id, cloneProposal(proposal));
       await this.persistProposals();
     });
@@ -286,39 +275,4 @@ function cloneProposal(proposal: ImprovementProposal): ImprovementProposal {
 
 function cloneEvent(event: EvolutionEvent): EvolutionEvent {
   return { ...event, at: cloneDate(event.at), payload: { ...event.payload } };
-}
-
-function matchesEvidence(item: Evidence, query: EvidenceQuery): boolean {
-  if (query.agentId && item.agentId !== query.agentId) {
-    return false;
-  }
-  if (query.kind && item.kind !== query.kind) {
-    return false;
-  }
-  if (query.sourceIdentity && item.provenance.sourceIdentity !== query.sourceIdentity) {
-    return false;
-  }
-  if (query.scope && !scopesEqual(item.scope, query.scope)) {
-    return false;
-  }
-  return true;
-}
-
-function matchesLesson(item: Lesson, query: LessonQuery): boolean {
-  if (query.agentId && item.agentId !== query.agentId) {
-    return false;
-  }
-  if (query.status && item.status !== query.status) {
-    return false;
-  }
-  if (query.kind && item.kind !== query.kind) {
-    return false;
-  }
-  if (query.statement && item.statement !== query.statement) {
-    return false;
-  }
-  if (query.scope && !scopesEqual(item.scope, query.scope)) {
-    return false;
-  }
-  return true;
 }

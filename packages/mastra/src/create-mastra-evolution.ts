@@ -10,8 +10,6 @@ import { probeCapabilities } from './probe-capabilities';
 import type { CreateMastraEvolutionOptions, MastraEvolution } from './types';
 import type { EvolutionScope } from '@mastra-evolution/core';
 
-const EVOLUTION_METADATA = Symbol.for('@mastra-evolution/mastra');
-
 /**
  * Attach Evolution fragments to an existing Mastra Agent without subclassing.
  *
@@ -31,11 +29,6 @@ export function createMastraEvolution(options: CreateMastraEvolutionOptions): Ma
   const processors: unknown[] = [];
   const afterToolCall = createAfterToolCall(learning, agentId);
   const hooks = { afterToolCall };
-  const metadata = {
-    capabilities,
-    store: options.store,
-    improvement: options.improvement,
-  };
 
   return {
     capabilities,
@@ -50,24 +43,7 @@ export function createMastraEvolution(options: CreateMastraEvolutionOptions): Ma
       return applyProcessors(callOptions, next, processors);
     },
     register<T>(agent: T): T {
-      attachMetadata(agent, metadata);
       return agent;
     },
   };
-}
-
-function attachMetadata(agent: unknown, metadata: unknown): void {
-  if (agent === null || (typeof agent !== 'object' && typeof agent !== 'function')) {
-    return;
-  }
-  try {
-    Object.defineProperty(agent, EVOLUTION_METADATA, {
-      configurable: true,
-      enumerable: false,
-      value: metadata,
-      writable: false,
-    });
-  } catch {
-    return;
-  }
 }

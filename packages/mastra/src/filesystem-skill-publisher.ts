@@ -2,6 +2,9 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
+import { isNodeErrorCode } from '@mastra-evolution/core';
+import { renderSkillMarkdown as renderSkillDocument } from '@mastra-evolution/learning';
+
 import { isRecord, stringField } from './is-record';
 
 import type {
@@ -50,7 +53,7 @@ export class FilesystemSkillPublisher implements EvolutionPublisher {
     const skillDir = resolveUnderRoot(this.directory, skillName);
     await mkdir(skillDir, { recursive: true });
     const skillPath = path.join(skillDir, SKILL_MARKDOWN);
-    await writeFile(skillPath, renderSkillMarkdown(proposal.candidateArtifact), 'utf8');
+    await writeFile(skillPath, markdownFromArtifact(proposal.candidateArtifact), 'utf8');
     await appendDraft(this.directory, { path: skillPath, proposalId: proposal.id });
     return { path: skillPath };
   }
@@ -107,8 +110,11 @@ async function readManifest(directory: string): Promise<VersionManifest> {
       current: typeof parsed.current === 'string' ? parsed.current : undefined,
       revisions: parsed.revisions.filter(isVersionRecord),
     };
-  } catch {
-    return { revisions: [] };
+  } catch (error: unknown) {
+    if (isNodeErrorCode(error, 'ENOENT')) {
+      return { revisions: [] };
+    }
+    throw error;
   }
 }
 
@@ -124,7 +130,7 @@ async function writeVersionBlob(
   const versionsDir = resolveUnderRoot(directory, VERSIONS_DIR);
   await mkdir(versionsDir, { recursive: true });
   const blobPath = resolveUnderRoot(directory, VERSIONS_DIR, `${safeSegment(revision)}.md`);
-  await writeFile(blobPath, renderSkillMarkdown(artifact), 'utf8');
+  await writeFile(blobPath, markdownFromArtifact(artifact), 'utf8');
 }
 
 async function appendDraft(directory: string, draft: DraftRecord): Promise<void> {
@@ -148,8 +154,11 @@ async function readDrafts(directory: string): Promise<DraftRecord[]> {
     return parsed.filter((item): item is DraftRecord => {
       return isRecord(item) && typeof item.path === 'string' && typeof item.proposalId === 'string';
     });
-  } catch {
-    return [];
+  } catch (error: unknown) {
+    if (isNodeErrorCode(error, 'ENOENT')) {
+      return [];
+    }
+    throw error;
   }
 }
 
@@ -167,17 +176,18 @@ function skillNameFrom(proposal: ImprovementProposal): string {
   return proposal.id;
 }
 
-function renderSkillMarkdown(artifact: unknown): string {
+function markdownFromArtifact(artifact: unknown): string {
   if (typeof artifact === 'string') {
     return artifact;
   }
   if (!isRecord(artifact)) {
-    return '---\nname: untitled-skill\ndescription: ""\n---\n';
+    return renderSkillDocument({ name: 'untitled-skill', description: '', instructions: '' });
   }
-  const name = stringField(artifact, 'name') ?? 'untitled-skill';
-  const description = stringField(artifact, 'description') ?? '';
-  const body = stringField(artifact, 'markdown') ?? stringField(artifact, 'instructions') ?? '';
-  return `---\nname: ${JSON.stringify(name)}\ndescription: ${JSON.stringify(description)}\n---\n\n${body}\n`;
+  return renderSkillDocument({
+    name: stringField(artifact, 'name') ?? 'untitled-skill',
+    description: stringField(artifact, 'description') ?? '',
+    instructions: stringField(artifact, 'markdown') ?? stringField(artifact, 'instructions') ?? '',
+  });
 }
 
 function safeSegment(value: string): string {

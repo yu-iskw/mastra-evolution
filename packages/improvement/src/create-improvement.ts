@@ -1,11 +1,10 @@
-import { parseAutonomy, VersionConflictError } from '@mastra-evolution/core';
+import { parseAutonomy, slugSkillName } from '@mastra-evolution/core';
 
 import {
   defaultEnterprisePromotionPolicy,
   defaultHobbyPromotionPolicy,
-  LEARNING_ONLY_REASON,
   NON_SKILL_TARGET_REASON,
-  RECOMMEND_ONLY_REASON,
+  promotionDecisionForAutonomy,
 } from './policies';
 
 import type {
@@ -130,7 +129,7 @@ async function proposeFromLesson(
     target: { type: SKILL_TARGET_TYPE },
     candidateArtifact: artifact ?? {
       markdown: lesson.statement,
-      name: skillNameFromLesson(lesson),
+      name: slugSkillName(lesson.statement, `skill-${lesson.id}`),
     },
     status: 'draft',
     version: 0,
@@ -180,7 +179,10 @@ async function promoteProposal(
   if (!proposal.evaluation) {
     proposal = await evaluateProposal(deps, proposalId, {});
   }
-  const evaluation = proposal.evaluation ?? missingEvaluation();
+  if (!proposal.evaluation) {
+    throw new Error(MISSING_EVALUATOR_ERROR);
+  }
+  const evaluation = proposal.evaluation;
   const independentSourceCount = await countIndependentSources(deps.store, proposal);
   const decision = await deps.policy.decide(proposal, evaluation, {
     autonomy: deps.autonomy,
@@ -292,9 +294,6 @@ async function publishApproved(
       proposalId: proposal.id,
       error: error instanceof Error ? error.message : String(error),
     });
-    if (error instanceof VersionConflictError) {
-      throw error;
-    }
     throw error instanceof Error ? error : new Error('Failed to persist published proposal');
   }
   await appendEvent(deps, EVENT_PROMOTE, proposal.agentId, {
@@ -307,24 +306,15 @@ async function publishApproved(
 }
 
 function autonomyBlock(autonomy: AutonomyLevel): PromotionDecision | undefined {
-  switch (autonomy) {
-    case 0:
-    case 1: {
-      return { decision: 'reject', reason: LEARNING_ONLY_REASON };
-    }
-    case 2: {
-      return { decision: 'reject', reason: RECOMMEND_ONLY_REASON };
-    }
-    case 3:
-    case 4:
-    case 5: {
-      return undefined;
-    }
-    default: {
-      const exhaustive: never = autonomy;
-      return exhaustive;
-    }
+  if (autonomy >= 3) {
+    return undefined;
   }
+  return promotionDecisionForAutonomy(
+    {
+      target: { type: SKILL_TARGET_TYPE },
+    } as ImprovementProposal,
+    { autonomy },
+  );
 }
 
 async function persistEvaluation(
@@ -405,18 +395,4 @@ async function countIndependentSources(
     identities.add(resourceId ?? item.id);
   }
   return identities.size;
-}
-
-function missingEvaluation(): ImprovementEvaluation {
-  return { verdict: 'inconclusive', regressions: [], error: MISSING_EVALUATOR_ERROR };
-}
-
-function skillNameFromLesson(lesson: Lesson): string {
-  const slug = lesson.statement
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-    .slice(0, 64);
-  return slug.length > 0 ? slug : `skill-${lesson.id}`;
 }

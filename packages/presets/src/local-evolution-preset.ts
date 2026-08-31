@@ -1,11 +1,10 @@
 import path from 'node:path';
 
-import { createImprovement } from '@mastra-evolution/improvement';
 import { FilesystemSkillPublisher } from '@mastra-evolution/mastra';
 import { LocalEvolutionStore } from '@mastra-evolution/storage-local';
 
 import { HOBBY_SKILL_AUTONOMY } from './autonomy-defaults';
-import { createPresetEvolution, resolvePresetEvaluator } from './create-preset-evolution';
+import { createPresetEvolution, createPresetImprovement } from './create-preset-evolution';
 import { createPresetLearning } from './create-preset-learning';
 
 import type { SharedImprovementPresetOptions } from './types';
@@ -37,16 +36,10 @@ export function localEvolutionPreset(options: LocalEvolutionPresetOptions): Loca
     directory: options.skillsDirectory ?? path.join(options.directory, DEFAULT_SKILLS_DIR),
   });
   const autonomy = options.autonomy ?? HOBBY_SKILL_AUTONOMY;
-  const improvement = createImprovement({
-    store,
-    evaluator: resolvePresetEvaluator(options),
+  const improvement = createPresetImprovement(store, options, {
+    autonomy,
     publisher,
     approval: options.approval,
-    autonomy,
-    experimentsAvailable: options.experimentsAvailable,
-    telemetry: options.telemetry,
-    now: options.now,
-    id: options.id,
   });
   return {
     store,

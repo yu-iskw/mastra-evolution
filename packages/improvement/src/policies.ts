@@ -1,3 +1,8 @@
+import {
+  containsSensitiveText,
+  isOrganizationScope,
+} from '@mastra-evolution/core';
+
 import type {
   ImprovementEvaluation,
   ImprovementProposal,
@@ -19,15 +24,6 @@ const SENSITIVE_CONTENT_REASON = 'credentials/security content';
 const UNSAFE_TARGET_REASON = 'target is not auto-mutable';
 const EVALUATION_FAILED_REASON = 'evaluation failed';
 const PUBLISH_DECISION: PromotionDecision = { decision: 'publish' };
-
-const SENSITIVE_NEEDLES = [
-  'credential',
-  'secret',
-  'password',
-  'authorization',
-  'authz',
-  'api key',
-] as const;
 
 const DEFAULT_INDEPENDENT_SOURCES = 2;
 const DEFAULT_INDEPENDENT_USERS = 2;
@@ -62,7 +58,7 @@ export function evidenceThresholdPolicy(minOccurrence?: number): PromotionPolicy
 export function scopePolicy(minIndependentSources = DEFAULT_INDEPENDENT_SOURCES): PromotionPolicy {
   return syncPolicy((proposal, _evaluation, context) => {
     if (
-      proposal.scope.type === 'organization' &&
+      isOrganizationScope(proposal.scope) &&
       (context.independentSourceCount ?? 0) < minIndependentSources
     ) {
       return { decision: 'reject', reason: ORG_SCOPE_REASON };
@@ -102,7 +98,7 @@ export function securityPolicy(): PromotionPolicy {
         return exhaustive;
       }
     }
-    if (containsSensitiveText(proposal)) {
+    if (proposalHasSensitiveText(proposal)) {
       return { decision: 'reject', reason: SENSITIVE_CONTENT_REASON };
     }
     return PUBLISH_DECISION;
@@ -110,7 +106,9 @@ export function securityPolicy(): PromotionPolicy {
 }
 
 export function approvalAutonomyPolicy(): PromotionPolicy {
-  return syncPolicy((proposal, _evaluation, context) => decideByAutonomy(proposal, context));
+  return syncPolicy((proposal, _evaluation, context) =>
+    promotionDecisionForAutonomy(proposal, context),
+  );
 }
 
 export function defaultHobbyPromotionPolicy(): PromotionPolicy {
@@ -159,7 +157,7 @@ function syncPolicy(
   };
 }
 
-function decideByAutonomy(
+export function promotionDecisionForAutonomy(
   proposal: ImprovementProposal,
   context: PromotionContext,
 ): PromotionDecision {
@@ -202,10 +200,9 @@ function occurrenceFromArtifact(artifact: unknown): number | undefined {
   return undefined;
 }
 
-function containsSensitiveText(proposal: ImprovementProposal): boolean {
+function proposalHasSensitiveText(proposal: ImprovementProposal): boolean {
   const artifactText = textFromArtifact(proposal.candidateArtifact);
-  const haystack = `${proposal.reason} ${artifactText}`.toLowerCase();
-  return SENSITIVE_NEEDLES.some((needle) => haystack.includes(needle));
+  return containsSensitiveText(`${proposal.reason} ${artifactText}`);
 }
 
 function textFromArtifact(artifact: unknown): string {

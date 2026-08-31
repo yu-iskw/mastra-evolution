@@ -1,8 +1,8 @@
+import { MAX_SKILL_NAME_LENGTH, slugSkillName } from '@mastra-evolution/core';
+
 import type { Lesson, SuggestedAction } from '@mastra-evolution/core';
 
-const MAX_SKILL_NAME_LENGTH = 64;
 const SKILL_NAME_PATTERN = /^[a-z0-9-]+$/;
-const SKILL_WORD_LIMIT = 5;
 
 export interface SkillDraft {
   name: string;
@@ -16,7 +16,7 @@ export function draftSkillFromLesson(lesson: Lesson): SkillDraft | undefined {
   if (!shouldDraftSkill(lesson)) {
     return undefined;
   }
-  const name = skillNameFromStatement(lesson.statement);
+  const name = slugSkillName(lesson.statement);
   const description = oneLine(lesson.statement);
   const errors = validateSkillName(name);
   const markdown = renderSkillMarkdown({
@@ -86,17 +86,6 @@ function shouldDraftSkill(lesson: Lesson): boolean {
 
 function isSkillAction(action: SuggestedAction | undefined): boolean {
   return action === 'create-skill' || action === 'update-skill';
-}
-
-function skillNameFromStatement(statement: string): string {
-  const words = statement
-    .trim()
-    .toLowerCase()
-    .split(/\s+/)
-    .map((word) => word.replace(/[^a-z0-9]+/g, ''))
-    .filter((word) => word.length > 0)
-    .slice(0, SKILL_WORD_LIMIT);
-  return words.join('-');
 }
 
 function oneLine(text: string): string {

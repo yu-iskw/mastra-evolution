@@ -1,12 +1,11 @@
 import {
-  createImprovement,
   defaultEnterprisePromotionPolicy,
   independentUsersScopePromotionPolicy,
 } from '@mastra-evolution/improvement';
 import { PostgresEvolutionStore } from '@mastra-evolution/storage-postgres';
 
 import { ENTERPRISE_SKILL_AUTONOMY } from './autonomy-defaults';
-import { createPresetEvolution, resolvePresetEvaluator } from './create-preset-evolution';
+import { createPresetEvolution, createPresetImprovement } from './create-preset-evolution';
 import { createPresetLearning } from './create-preset-learning';
 
 import type { SharedImprovementPresetOptions } from './types';
@@ -54,17 +53,11 @@ export function enterpriseGovernedPreset(
   const autonomy = options.autonomy ?? ENTERPRISE_SKILL_AUTONOMY;
   const policy = defaultEnterprisePromotionPolicy();
   const scopePromotion = independentUsersScopePromotionPolicy(INDEPENDENT_USERS);
-  const improvement = createImprovement({
-    store,
-    evaluator: resolvePresetEvaluator(options),
+  const improvement = createPresetImprovement(store, options, {
+    autonomy,
     publisher: options.publisher,
     approval: options.approval,
     policy,
-    autonomy,
-    experimentsAvailable: options.experimentsAvailable,
-    telemetry: options.telemetry,
-    now: options.now,
-    id: options.id,
   });
   return {
     store,

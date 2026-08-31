@@ -62,7 +62,11 @@ export function createLearningExtractors(
   return [
     {
       onExtracted: async (payload: unknown, ctx?: unknown) => {
-        await invokeSafely(() => ingestExtracted(learning, payload, ctx, agentId, scope));
+        try {
+          await ingestExtracted(learning, payload, ctx, agentId, scope);
+        } catch {
+          return;
+        }
       },
     },
   ];
@@ -76,7 +80,11 @@ export function createAfterToolCall(
     if (!learning.enabled) {
       return;
     }
-    await invokeSafely(() => ingestToolResult(learning, context, agentId));
+    try {
+      await ingestToolResult(learning, context, agentId);
+    } catch {
+      return;
+    }
   };
 }
 
@@ -247,12 +255,4 @@ function isLearningRuntime(
     return false;
   }
   return typeof value.ingest === 'function' || typeof value.ingestSignal === 'function';
-}
-
-async function invokeSafely(run: () => Promise<unknown>): Promise<void> {
-  try {
-    await run();
-  } catch (error: unknown) {
-    void error;
-  }
 }

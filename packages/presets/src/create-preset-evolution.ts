@@ -1,7 +1,16 @@
+import { createImprovement } from '@mastra-evolution/improvement';
 import { createMastraEvaluator, createMastraEvolution } from '@mastra-evolution/mastra';
 
 import type { SharedImprovementPresetOptions, SharedPresetOptions } from './types';
-import type { EvolutionStore, ImprovementEvaluator } from '@mastra-evolution/core';
+import type {
+  ApprovalProvider,
+  AutonomyLevel,
+  AutonomyName,
+  EvolutionPublisher,
+  EvolutionStore,
+  ImprovementEvaluator,
+  PromotionPolicy,
+} from '@mastra-evolution/core';
 import type { ImprovementRuntime } from '@mastra-evolution/improvement';
 import type { LearningRuntime } from '@mastra-evolution/learning';
 import type { MastraEvolution } from '@mastra-evolution/mastra';
@@ -15,6 +24,30 @@ export function resolvePresetEvaluator(
       experimentsAvailable: options.experimentsAvailable ?? false,
     })
   );
+}
+
+export function createPresetImprovement(
+  store: EvolutionStore,
+  options: SharedImprovementPresetOptions,
+  extras: {
+    autonomy: AutonomyLevel | AutonomyName;
+    publisher?: EvolutionPublisher;
+    approval?: ApprovalProvider;
+    policy?: PromotionPolicy;
+  },
+): ImprovementRuntime {
+  return createImprovement({
+    store,
+    evaluator: resolvePresetEvaluator(options),
+    publisher: extras.publisher,
+    approval: extras.approval ?? options.approval,
+    policy: extras.policy,
+    autonomy: extras.autonomy,
+    experimentsAvailable: options.experimentsAvailable,
+    telemetry: options.telemetry,
+    now: options.now,
+    id: options.id,
+  });
 }
 
 export function createPresetEvolution(options: {

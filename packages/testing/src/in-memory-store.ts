@@ -1,4 +1,9 @@
-import { scopesEqual, VersionConflictError } from '@mastra-evolution/core';
+import {
+  assertProposalWriteAllowed,
+  evidenceSharesSourceIdentity,
+  matchesEvidence,
+  matchesLesson,
+} from '@mastra-evolution/core';
 
 import type {
   Evidence,
@@ -21,12 +26,9 @@ export class InMemoryEvolutionStore implements EvolutionStore {
   private readonly events: EvolutionEvent[] = [];
 
   putEvidence(evidence: Evidence): Promise<void> {
-    const identity = evidence.provenance.sourceIdentity;
-    if (identity) {
-      for (const [id, existing] of this.evidence.entries()) {
-        if (existing.provenance.sourceIdentity === identity && existing.agentId === evidence.agentId) {
-          this.evidence.delete(id);
-        }
+    for (const [id, existing] of this.evidence.entries()) {
+      if (evidenceSharesSourceIdentity(existing, evidence)) {
+        this.evidence.delete(id);
       }
     }
     this.evidence.set(evidence.id, {
@@ -65,18 +67,7 @@ export class InMemoryEvolutionStore implements EvolutionStore {
   }
 
   putProposal(proposal: ImprovementProposal): Promise<void> {
-    const existing = this.proposals.get(proposal.id);
-    if (existing && proposal.version < existing.version) {
-      return Promise.reject(new VersionConflictError());
-    }
-    if (
-      existing &&
-      existing.status === 'published' &&
-      proposal.status === 'published' &&
-      proposal.version === existing.version
-    ) {
-      return Promise.reject(new VersionConflictError());
-    }
+    assertProposalWriteAllowed(this.proposals.get(proposal.id), proposal);
     this.proposals.set(proposal.id, {
       ...proposal,
       lessonIds: [...proposal.lessonIds],
@@ -108,39 +99,4 @@ export class InMemoryEvolutionStore implements EvolutionStore {
   findEvents(agentId: string): Promise<EvolutionEvent[]> {
     return Promise.resolve(this.events.filter((event) => event.agentId === agentId));
   }
-}
-
-function matchesEvidence(item: Evidence, query: EvidenceQuery): boolean {
-  if (query.agentId && item.agentId !== query.agentId) {
-    return false;
-  }
-  if (query.kind && item.kind !== query.kind) {
-    return false;
-  }
-  if (query.sourceIdentity && item.provenance.sourceIdentity !== query.sourceIdentity) {
-    return false;
-  }
-  if (query.scope && !scopesEqual(item.scope, query.scope)) {
-    return false;
-  }
-  return true;
-}
-
-function matchesLesson(item: Lesson, query: LessonQuery): boolean {
-  if (query.agentId && item.agentId !== query.agentId) {
-    return false;
-  }
-  if (query.status && item.status !== query.status) {
-    return false;
-  }
-  if (query.kind && item.kind !== query.kind) {
-    return false;
-  }
-  if (query.statement && item.statement !== query.statement) {
-    return false;
-  }
-  if (query.scope && !scopesEqual(item.scope, query.scope)) {
-    return false;
-  }
-  return true;
 }

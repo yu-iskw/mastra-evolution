@@ -1,3 +1,5 @@
+import { isPlainObject } from '@mastra-evolution/core';
+
 import type {
   Evidence,
   EvidenceKind,
@@ -105,10 +107,10 @@ function parseObject(text: string): Record<string, unknown> {
 }
 
 function asRecord(value: unknown, label: string): Record<string, unknown> {
-  if (typeof value !== 'object' || value === null || Array.isArray(value)) {
+  if (!isPlainObject(value)) {
     throw new TypeError(`Expected object ${label}`);
   }
-  return value as Record<string, unknown>;
+  return value;
 }
 
 function asProvenance(value: unknown): EvidenceProvenance {

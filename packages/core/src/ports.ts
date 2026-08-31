@@ -19,7 +19,7 @@ export interface EvolutionStore {
   putProposal(proposal: ImprovementProposal): Promise<void>;
   getProposal(id: string): Promise<ImprovementProposal | undefined>;
   appendEvent(event: EvolutionEvent): Promise<void>;
-  findEvents?(agentId: string): Promise<EvolutionEvent[]>;
+  findEvents(agentId: string): Promise<EvolutionEvent[]>;
 }
 
 export interface ImprovementEvaluator {

@@ -1,3 +1,5 @@
+import { isPlainObject } from '@mastra-evolution/core';
+
 import type {
   EvolutionScope,
   LearningSignal,
@@ -37,7 +39,7 @@ const SCOPE_TYPE_SET: ReadonlySet<string> = new Set(Object.keys(SCOPE_TYPES));
 const SUGGESTED_ACTION_SET: ReadonlySet<string> = new Set(Object.keys(SUGGESTED_ACTIONS));
 
 export function parseLearningSignal(input: unknown): LearningSignal | undefined {
-  if (!isRecord(input)) {
+  if (!isPlainObject(input)) {
     return undefined;
   }
   if (!isLearningSignalKind(input.kind) || typeof input.summary !== 'string') {
@@ -66,10 +68,6 @@ export function parseLearningSignal(input: unknown): LearningSignal | undefined 
   }
 
   return signal;
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
 function isLearningSignalKind(value: unknown): value is LearningSignalKind {
