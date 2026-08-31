@@ -70,33 +70,12 @@ importers:
       '@hono/node-server':
         specifier: 2.1.1
         version: 2.1.1(hono@4.13.4)
-      '@mastra-evolution/mastra':
+      '@mastra-evolution/adapters':
         specifier: workspace:*
-        version: link:../../packages/mastra
-      '@mastra-evolution/presets':
+        version: link:../../packages/adapters
+      '@mastra-evolution/core':
         specifier: workspace:*
-        version: link:../../packages/presets
-      '@mastra-evolution/storage-postgres':
-        specifier: workspace:*
-        version: link:../../packages/storage-postgres
-      '@mastra/core':
-        specifier: 1.63.2
-        version: 1.63.2(zod@4.5.4)
-      '@mastra/hono':
-        specifier: 1.7.5
-        version: 1.7.5(@hono/node-server@2.1.1(hono@4.13.4))(@mastra/core@1.63.2(zod@4.5.4))(hono@4.13.4)(zod@4.5.4)
-      hono:
-        specifier: 4.13.4
-        version: 4.13.4
-
-  examples/local-learning:
-    dependencies:
-      '@hono/node-server':
-        specifier: 2.1.1
-        version: 2.1.1(hono@4.13.4)
-      '@mastra-evolution/mastra':
-        specifier: workspace:*
-        version: link:../../packages/mastra
+        version: link:../../packages/core
       '@mastra/core':
         specifier: 1.63.2
         version: 1.63.2(zod@4.5.4)
@@ -112,12 +91,12 @@ importers:
       '@hono/node-server':
         specifier: 2.1.1
         version: 2.1.1(hono@4.13.0)
+      '@mastra-evolution/adapters':
+        specifier: workspace:*
+        version: link:../../packages/adapters
       '@mastra-evolution/core':
         specifier: workspace:*
         version: link:../../packages/core
-      '@mastra-evolution/mastra':
-        specifier: workspace:*
-        version: link:../../packages/mastra
       '@mastra/core':
         specifier: 1.63.2
         version: 1.63.2(zod@4.5.4)
@@ -128,97 +107,13 @@ importers:
         specifier: 4.13.0
         version: 4.13.0
 
+  packages/adapters:
+    dependencies:
+      '@mastra-evolution/core':
+        specifier: workspace:*
+        version: link:../core
+
   packages/core: {}
-
-  packages/improvement:
-    dependencies:
-      '@mastra-evolution/core':
-        specifier: workspace:*
-        version: link:../core
-    devDependencies:
-      '@mastra-evolution/testing':
-        specifier: workspace:*
-        version: link:../testing
-
-  packages/learning:
-    dependencies:
-      '@mastra-evolution/core':
-        specifier: workspace:*
-        version: link:../core
-    devDependencies:
-      '@mastra-evolution/testing':
-        specifier: workspace:*
-        version: link:../testing
-
-  packages/mastra:
-    dependencies:
-      '@mastra-evolution/core':
-        specifier: workspace:*
-        version: link:../core
-      '@mastra-evolution/improvement':
-        specifier: workspace:*
-        version: link:../improvement
-      '@mastra-evolution/learning':
-        specifier: workspace:*
-        version: link:../learning
-      '@mastra-evolution/storage-local':
-        specifier: workspace:*
-        version: link:../storage-local
-    devDependencies:
-      '@mastra-evolution/testing':
-        specifier: workspace:*
-        version: link:../testing
-
-  packages/presets:
-    dependencies:
-      '@mastra-evolution/core':
-        specifier: workspace:*
-        version: link:../core
-      '@mastra-evolution/improvement':
-        specifier: workspace:*
-        version: link:../improvement
-      '@mastra-evolution/learning':
-        specifier: workspace:*
-        version: link:../learning
-      '@mastra-evolution/mastra':
-        specifier: workspace:*
-        version: link:../mastra
-      '@mastra-evolution/storage-local':
-        specifier: workspace:*
-        version: link:../storage-local
-      '@mastra-evolution/storage-postgres':
-        specifier: workspace:*
-        version: link:../storage-postgres
-    devDependencies:
-      '@mastra-evolution/testing':
-        specifier: workspace:*
-        version: link:../testing
-
-  packages/storage-local:
-    dependencies:
-      '@mastra-evolution/core':
-        specifier: workspace:*
-        version: link:../core
-    devDependencies:
-      '@mastra-evolution/testing':
-        specifier: workspace:*
-        version: link:../testing
-
-  packages/storage-postgres:
-    dependencies:
-      '@mastra-evolution/core':
-        specifier: workspace:*
-        version: link:../core
-    devDependencies:
-      '@mastra-evolution/testing':
-        specifier: workspace:*
-        version: link:../testing
-
-  packages/testing:
-    dependencies:
-      '@mastra-evolution/core':
-        specifier: workspace:*
-        version: link:../core
 
 packages:
 

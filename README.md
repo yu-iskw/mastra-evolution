@@ -8,16 +8,10 @@ Learning and improvement are independently enableable: you can persist lessons w
 
 ## Packages
 
-| Package                              | Role                                                          |
-| ------------------------------------ | ------------------------------------------------------------- |
-| `@mastra-evolution/core`             | Framework-neutral domain types and ports                      |
-| `@mastra-evolution/learning`         | Evidence ingest, aggregation, lessons                         |
-| `@mastra-evolution/improvement`      | Proposals, evaluation, promotion policy, rollback             |
-| `@mastra-evolution/mastra`           | Adapter: `createMastraEvolution`, evaluators, skill publisher |
-| `@mastra-evolution/presets`          | Optional batteries-included wiring                            |
-| `@mastra-evolution/storage-local`    | Single-writer local filesystem store                          |
-| `@mastra-evolution/storage-postgres` | Multi-instance PostgreSQL store                               |
-| `@mastra-evolution/testing`          | Fakes and contract helpers                                    |
+| Package                      | Role                                                                                                        |
+| ---------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| `@mastra-evolution/core`     | Domain types. Subpaths: `./learning`, `./improvement`, `./storage-local`, `./storage-postgres`, `./testing` |
+| `@mastra-evolution/adapters` | Mastra adapter (`createMastraEvolution`) and presets (`@mastra-evolution/adapters/presets`)                 |
 
 Public attach API — existing Agent, then one factory call. Workspace appears once, on the Agent:
 
@@ -45,6 +39,7 @@ const evolution = createMastraEvolution({
   agent,
   workspace,
   learning: true,
+  improvement: { autonomy: 'auto-promote-bounded' },
 });
 
 await agent.generate('What is booked revenue?');
@@ -52,25 +47,24 @@ await agent.generate('What is booked revenue?');
 
 The factory binds the Workspace you pass (Mastra Agent keeps workspace private). It merges `afterToolCall` into workspace `tools.hooks` when `setToolsConfig` exists, and infers a local store beside the workspace filesystem. There is no `forAgent()` spread and no `SelfImprovingAgent`.
 
-Self-improvement: pass `improvement: { autonomy: 'auto-promote-bounded' }` (skills write under sibling `.evolution/skills`, not git-managed `workspace/skills/`). `createLearning` / `createImprovement` remain advanced exports. `applyToCall` is an escape hatch for assigned/non-workspace tools. `register(agent)` is identity-only.
+Promoted skills write under sibling `.evolution/skills`, not git-managed `workspace/skills/`. Learning can run without improvement (`learning: true` only) when you want lessons without skill publication. For visibility into agent runs, use [Mastra observability](https://mastra.ai/docs/observability/overview). Advanced factories live on `@mastra-evolution/core/learning` and `@mastra-evolution/core/improvement`. `applyToCall` is an escape hatch for assigned/non-workspace tools. `register(agent)` is identity-only.
 
 **Supported Mastra:** `@mastra/core` `>=1.63.0 <2` (verified `1.63.2`).
 
-## Quickstart (local learning)
+## Quickstart (local self-improvement)
 
 No PostgreSQL, queue, or live model is required to compile or to skip-run the example.
 
 ```bash
 pnpm install
 pnpm build
-pnpm --filter @mastra-evolution/example-local-learning start
+pnpm --filter @mastra-evolution/example-local-self-improvement start
 ```
 
-That example is a Hono HTTP server (`createLocalLearning()` plus `@mastra/hono`). Without a model API key it still listens and logs a warning; generate calls need `GEMINI_API_KEY` or `GOOGLE_GENERATIVE_AI_API_KEY`. Default `pnpm test` does not call a paid API. For L4 skill improvement, see [`examples/local-self-improvement`](examples/local-self-improvement). For Cloud Run + PostgreSQL + artifact bucket, see [`examples/cloud-run-a2a`](examples/cloud-run-a2a).
+That example is a Hono HTTP server (learning plus L4 bounded skill promotion, plus `@mastra/hono`). Without a model API key it still listens and logs a warning; generate calls need `GEMINI_API_KEY` or `GOOGLE_GENERATIVE_AI_API_KEY`. Default `pnpm test` does not call a paid API. For Cloud Run + PostgreSQL + artifact bucket, see [`examples/cloud-run-a2a`](examples/cloud-run-a2a).
 
 ## Documentation
 
-- [`examples/local-learning`](examples/local-learning) — learning-only attach
 - [`examples/local-self-improvement`](examples/local-self-improvement) — learning plus skill promotion
 - [`examples/cloud-run-a2a`](examples/cloud-run-a2a) — multi-instance Cloud Run + PostgreSQL
 

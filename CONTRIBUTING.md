@@ -23,7 +23,7 @@ Optional: prefetch Trunk’s hermetic tools (helpful for offline work or CI imag
 pnpm exec trunk install
 ```
 
-If you prefer a global `trunk` on your PATH, see the [Trunk installation guide](https://docs.trunk.io/references/cli/getting-started/install) (e.g. `brew install trunk-io` on macOS).
+If you prefer a global `trunk` on your PATH, see the [Trunk installation guide](https://docs.trunk.io/code-quality/overview/getting-started/install) (e.g. `brew install trunk-io` on macOS).
 
 ## Supply-chain protections
 
@@ -55,13 +55,14 @@ pnpm format
 
 ## Project structure
 
-- `packages/` — library packages listed in [`README.md`](README.md)
-- `examples/` — `local-learning`, `local-self-improvement`, `cloud-run-a2a`
+- `packages/` — `@mastra-evolution/core` and `@mastra-evolution/adapters`
+- `examples/` — `local-self-improvement`, `cloud-run-a2a`
 - `docs/architecture/` — control-plane and Cloud Run notes
 - `docs/adr/` — architecture decisions
 
 ## Architecture and decisions
 
 - [`docs/adr/0001-agent-first-workspace-attach.md`](docs/adr/0001-agent-first-workspace-attach.md) — agent-first workspace attach
+- [`docs/adr/0002-two-package-publish-surface.md`](docs/adr/0002-two-package-publish-surface.md) — two published packages
 - [`docs/architecture/control-plane.md`](docs/architecture/control-plane.md) — Evolution vs Mastra runtime
 - [`docs/architecture/cloud-run.md`](docs/architecture/cloud-run.md) — Postgres vs FUSE, multi-instance concurrency

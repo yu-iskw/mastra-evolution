@@ -58,9 +58,9 @@ if (major !== 1 || minor < 63) {
   skip(`skip: installed @mastra/core@${installed} is below peer >=1.63.0 <2`);
 }
 
-const build = run('pnpm', ['--filter', '@mastra-evolution/mastra...', 'build']);
+const build = run('pnpm', ['--filter', '@mastra-evolution/adapters...', 'build']);
 if (build.status !== 0) {
   process.exit(build.status ?? 1);
 }
-const test = run('pnpm', ['--filter', '@mastra-evolution/mastra', 'test']);
+const test = run('pnpm', ['--filter', '@mastra-evolution/adapters', 'test']);
 process.exit(test.status ?? 1);

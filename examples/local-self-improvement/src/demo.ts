@@ -9,7 +9,7 @@ import { applyGeminiApiKey, hasModelApiKey, readEnv } from './env';
 
 import type { AnalyticsStack, EvolutionSnapshot } from './create-analytics-stack';
 import type { Agent } from '@mastra/core/agent';
-import type { MastraEvolution } from '@mastra-evolution/mastra';
+import type { MastraEvolution } from '@mastra-evolution/adapters';
 
 const DEFAULT_TURNS = 101;
 

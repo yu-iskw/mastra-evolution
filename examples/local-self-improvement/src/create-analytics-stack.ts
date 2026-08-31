@@ -6,12 +6,12 @@ import { Mastra } from '@mastra/core';
 import { Agent } from '@mastra/core/agent';
 import { SkillSearchProcessor } from '@mastra/core/processors';
 import { LocalFilesystem, Workspace } from '@mastra/core/workspace';
+import { createMastraEvolution, resolveEvolutionWorkspaceLayout } from '@mastra-evolution/adapters';
 import { slugSkillName } from '@mastra-evolution/core';
-import { createMastraEvolution, resolveEvolutionWorkspaceLayout } from '@mastra-evolution/mastra';
 
 import { applyGeminiApiKey, readEnv } from './env';
 
-import type { EvolutionWorkspaceLayout, MastraEvolution } from '@mastra-evolution/mastra';
+import type { EvolutionWorkspaceLayout, MastraEvolution } from '@mastra-evolution/adapters';
 
 const MODEL = 'google/gemini-flash-lite-latest';
 export const AGENT_ID = 'analytics-agent';

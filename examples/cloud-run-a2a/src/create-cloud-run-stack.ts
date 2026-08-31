@@ -3,13 +3,12 @@ import path from 'node:path';
 import { Mastra } from '@mastra/core';
 import { Agent } from '@mastra/core/agent';
 import { LocalFilesystem, Workspace } from '@mastra/core/workspace';
-import { createMastraEvolution, resolveEvolutionWorkspaceLayout } from '@mastra-evolution/mastra';
-import { PostgresEvolutionStore } from '@mastra-evolution/storage-postgres';
+import { createMastraEvolution, resolveEvolutionWorkspaceLayout } from '@mastra-evolution/adapters';
+import { PostgresEvolutionStore, type SqlExecutor } from '@mastra-evolution/core/storage-postgres';
 
 import { workspaceDir as defaultWorkspaceDir } from './env';
 
-import type { MastraEvolution } from '@mastra-evolution/mastra';
-import type { SqlExecutor } from '@mastra-evolution/storage-postgres';
+import type { MastraEvolution } from '@mastra-evolution/adapters';
 
 const MODEL = 'google/gemini-flash-lite-latest';
 export const AGENT_ID = 'analytics-agent';

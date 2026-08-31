@@ -79,12 +79,12 @@ const sharedTsRules = Object.assign({}, tseslint.configs['recommended-type-check
   'no-new-func': 'error',
   'prefer-const': 'error',
   'max-lines-per-function': ['error', { max: 280 }],
-  'max-depth': ['error', { max: 6 }],
-  'max-params': ['error', { max: 8 }],
-  'max-nested-callbacks': ['error', { max: 4 }],
+  'max-depth': ['error', { max: 4 }],
+  'max-params': ['error', { max: 5 }],
+  'max-nested-callbacks': ['error', { max: 3 }],
   // SonarJS
-  'sonarjs/cyclomatic-complexity': ['error', { threshold: 20 }],
-  'sonarjs/cognitive-complexity': ['error', 20],
+  'sonarjs/cyclomatic-complexity': ['error', { threshold: 12 }],
+  'sonarjs/cognitive-complexity': ['error', 12],
   'sonarjs/no-duplicate-string': 'error',
   'sonarjs/prefer-immediate-return': 'error',
   'no-unreachable': 'error',
@@ -164,6 +164,24 @@ export default [
       ...sharedTsRules,
       '@typescript-eslint/no-unused-private-class-members': 'error',
       'unicorn/filename-case': unicornFilenameCase,
+    },
+  },
+  {
+    files: ['packages/core/**/*.ts'],
+    ignores: ['**/dist/**'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['@mastra/*', '@mastra-evolution/adapters', '@mastra-evolution/adapters/*'],
+              message:
+                '@mastra-evolution/core must stay Mastra-free; Mastra APIs belong in @mastra-evolution/adapters.',
+            },
+          ],
+        },
+      ],
     },
   },
   {

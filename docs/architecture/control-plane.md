@@ -78,4 +78,4 @@ Attach via `createMastraEvolution({ agent, workspace, learning: true })`. Pass `
 
 ## Adapter boundary
 
-`@mastra-evolution/mastra` is the only package that should know Mastra APIs. It probes capabilities and degrades (missing extractors fall back to hooks; missing experiments leave proposals unpublished or require an external evaluator). When Mastra gains a native primitive that overlaps Evolution, adapt to Mastra and deprecate the overlap.
+`@mastra-evolution/adapters` is the only package that should know Mastra APIs. It probes capabilities and degrades (missing extractors fall back to hooks; missing experiments leave proposals unpublished or require an external evaluator). When Mastra gains a native primitive that overlaps Evolution, adapt to Mastra and deprecate the overlap.

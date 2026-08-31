@@ -22,12 +22,12 @@ flowchart TB
   CR2 --> OBJ
 ```
 
-| Store         | Holds                                 | Adapter                              |
-| ------------- | ------------------------------------- | ------------------------------------ |
-| PostgreSQL    | Evidence, lessons, proposals, events  | `@mastra-evolution/storage-postgres` |
-| Object bucket | Skill blobs, workspace files, exports | Mastra skill publisher / GCS         |
+| Store         | Holds                                 | Adapter                                                              |
+| ------------- | ------------------------------------- | -------------------------------------------------------------------- |
+| PostgreSQL    | Evidence, lessons, proposals, events  | `@mastra-evolution/core/storage-postgres` (`PostgresEvolutionStore`) |
+| Object bucket | Skill blobs, workspace files, exports | Mastra skill publisher / GCS                                         |
 
-Hobby single-process use can stay on `@mastra-evolution/storage-local` (filesystem). That path is single-writer and is not a Cloud Run default.
+Hobby single-process use can stay on `LocalEvolutionStore` from `@mastra-evolution/core/storage-local` (filesystem). That path is single-writer and is not a Cloud Run default.
 
 ## Warning: do not use Cloud Storage FUSE as a SQLite/LibSQL database
 
@@ -43,7 +43,7 @@ Reference: [Cloud Storage volume mounts](https://docs.cloud.google.com/run/docs/
 
 ## Multi-instance optimistic concurrency
 
-Two Cloud Run instances may try to publish the same skill. `@mastra-evolution/storage-postgres` applies optimistic concurrency on proposal `version` (and published status). One writer wins; the other receives `VersionConflictError` and must not clobber artifacts.
+Two Cloud Run instances may try to publish the same skill. `PostgresEvolutionStore` applies optimistic concurrency on proposal `version` (and published status). One writer wins; the other receives `VersionConflictError` and must not clobber artifacts.
 
 Operational rules:
 

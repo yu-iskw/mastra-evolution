@@ -16,10 +16,6 @@
     "packages/*": {
       "project": ["src/**/*.ts"]
     },
-    "examples/local-learning": {
-      "entry": ["src/demo.ts"],
-      "project": ["src/**/*.ts"]
-    },
     "examples/local-self-improvement": {
       "entry": ["src/demo.ts"],
       "project": ["src/**/*.ts"]

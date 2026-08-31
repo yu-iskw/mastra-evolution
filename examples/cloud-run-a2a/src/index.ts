@@ -1,6 +1,6 @@
 import { serve } from '@hono/node-server';
 import { HonoBindings, HonoVariables, MastraServer } from '@mastra/hono';
-import { CLOUD_STORAGE_FUSE_WARNING } from '@mastra-evolution/presets';
+import { CLOUD_STORAGE_FUSE_WARNING } from '@mastra-evolution/adapters/presets';
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 

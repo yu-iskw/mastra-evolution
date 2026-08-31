@@ -12,9 +12,8 @@
   },
   "dependencies": {
     "@hono/node-server": "2.1.1",
-    "@mastra-evolution/mastra": "workspace:*",
-    "@mastra-evolution/presets": "workspace:*",
-    "@mastra-evolution/storage-postgres": "workspace:*",
+    "@mastra-evolution/adapters": "workspace:*",
+    "@mastra-evolution/core": "workspace:*",
     "@mastra/core": "1.63.2",
     "@mastra/hono": "1.7.5",
     "hono": "4.13.4"

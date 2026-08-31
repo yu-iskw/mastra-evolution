@@ -1,7 +1,7 @@
 {
   "name": "@mastra-evolution/core",
   "version": "0.1.0",
-  "description": "Framework-neutral domain contracts for Mastra Evolution.",
+  "description": "Framework-neutral Evolution domain: types, learning, improvement, and stores.",
   "keywords": [
     "mastra",
     "evolution",
@@ -16,6 +16,31 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
       "default": "./dist/index.js"
+    },
+    "./learning": {
+      "types": "./dist/learning/index.d.ts",
+      "import": "./dist/learning/index.js",
+      "default": "./dist/learning/index.js"
+    },
+    "./improvement": {
+      "types": "./dist/improvement/index.d.ts",
+      "import": "./dist/improvement/index.js",
+      "default": "./dist/improvement/index.js"
+    },
+    "./storage-local": {
+      "types": "./dist/storage-local/index.d.ts",
+      "import": "./dist/storage-local/index.js",
+      "default": "./dist/storage-local/index.js"
+    },
+    "./storage-postgres": {
+      "types": "./dist/storage-postgres/index.d.ts",
+      "import": "./dist/storage-postgres/index.js",
+      "default": "./dist/storage-postgres/index.js"
+    },
+    "./testing": {
+      "types": "./dist/testing/index.d.ts",
+      "import": "./dist/testing/index.js",
+      "default": "./dist/testing/index.js"
     }
   },
   "files": [
