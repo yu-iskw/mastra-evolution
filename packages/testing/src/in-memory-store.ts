@@ -1,8 +1,9 @@
 import {
-  assertProposalWriteAllowed,
   evidenceSharesSourceIdentity,
   matchesEvidence,
   matchesLesson,
+  proposalUpsertConflicts,
+  VersionConflictError,
 } from '@mastra-evolution/core';
 
 import type {
@@ -66,8 +67,10 @@ export class InMemoryEvolutionStore implements EvolutionStore {
     );
   }
 
-  async putProposal(proposal: ImprovementProposal): Promise<void> {
-    assertProposalWriteAllowed(this.proposals.get(proposal.id), proposal);
+  putProposal(proposal: ImprovementProposal): Promise<void> {
+    if (proposalUpsertConflicts(this.proposals.get(proposal.id), proposal)) {
+      return Promise.reject(new VersionConflictError());
+    }
     this.proposals.set(proposal.id, {
       ...proposal,
       lessonIds: [...proposal.lessonIds],
@@ -75,6 +78,7 @@ export class InMemoryEvolutionStore implements EvolutionStore {
       createdAt: cloneDate(proposal.createdAt),
       updatedAt: cloneDate(proposal.updatedAt),
     });
+    return Promise.resolve();
   }
 
   getProposal(id: string): Promise<ImprovementProposal | undefined> {
