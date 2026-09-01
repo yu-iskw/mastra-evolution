@@ -11,7 +11,12 @@ export { assertProposalWriteAllowed, proposalUpsertConflicts } from './proposal-
 export { evidenceSharesSourceIdentity, matchesEvidence, matchesLesson } from './query-match';
 export { isNodeErrorCode, isPlainObject, ownValue, stringField } from './records';
 export { containsSensitiveText, isNonLearnableText } from './sensitive-text';
-export { MAX_SKILL_NAME_LENGTH, slugSkillName } from './skill-name';
+export {
+  MAX_SKILL_DESCRIPTION_LENGTH,
+  MAX_SKILL_NAME_LENGTH,
+  slugSkillName,
+  validateSkillName,
+} from './skill-name';
 export type {
   Evidence,
   EvidenceKind,

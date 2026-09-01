@@ -136,11 +136,16 @@ describe('createMastraEvolution', () => {
     expect(callOptions.temperature).toBe(0);
     await Promise.resolve(applied.hooks.afterToolCall({ toolName: 'search', result: 'ok' }));
     expect(order).toEqual(['caller']);
+    expect(ingested).toHaveLength(0);
+    await Promise.resolve(
+      applied.hooks.afterToolCall({ toolName: 'search', error: new Error('boom') }),
+    );
+    expect(order).toEqual(['caller', 'caller']);
     expect(ingested).toHaveLength(1);
-    expect(ingested[0]?.kind).toBe('success');
+    expect(ingested[0]?.kind).toBe('failure');
     expect(ingested[0]?.source).toBe('tool-result');
     await Promise.resolve(applied.hooks.beforeToolCall());
-    expect(order).toEqual(['caller', 'before']);
+    expect(order).toEqual(['caller', 'caller', 'before']);
   });
 
   it('applyToCall leaves caller inputProcessors in place (replacement, not concat)', () => {
@@ -254,7 +259,9 @@ describe('createMastraEvolution', () => {
     });
     const error = vi.spyOn(console, 'error').mockImplementation(() => undefined);
     try {
-      await expect(throwing.hooks.afterToolCall?.({ toolName: 'query' })).resolves.toBeUndefined();
+      await expect(
+        throwing.hooks.afterToolCall?.({ toolName: 'query', error: new Error('timeout') }),
+      ).resolves.toBeUndefined();
       expect(error).toHaveBeenCalledWith(
         '[mastra-evolution] ingest failed',
         expect.objectContaining({ message: 'store down' }),
@@ -284,9 +291,11 @@ describe('createMastraEvolution', () => {
     await Promise.resolve(
       (applied.hooks as { afterToolCall: (ctx: unknown) => Promise<void> }).afterToolCall({
         toolName: 'search',
+        error: new Error('denied'),
       }),
     );
     expect(ingested).toHaveLength(1);
+    expect(ingested[0]?.kind).toBe('failure');
   });
 
   it('throws when learning: true has no workspace to infer a store', () => {
@@ -320,11 +329,12 @@ describe('createMastraEvolution', () => {
     };
     expect(typeof hooks.afterToolCall).toBe('function');
     await hooks.afterToolCall({ toolName: 'read_file' });
-    expect(existsSync(path.join(root, '.evolution', 'evidence.json'))).toBe(true);
+    expect(existsSync(path.join(root, '.evolution', 'evidence.json'))).toBe(false);
     await evolution.extractor().onExtracted({
       kind: 'correction',
       summary: 'Use booked revenue',
     });
+    expect(existsSync(path.join(root, '.evolution', 'evidence.json'))).toBe(true);
   });
 
   it('keeps an existing workspace afterToolCall and runs it first', async () => {
@@ -348,8 +358,10 @@ describe('createMastraEvolution', () => {
         },
       },
     });
-    const hooks = workspace.toolsConfig.hooks as { afterToolCall: () => Promise<void> };
-    await hooks.afterToolCall();
+    const hooks = workspace.toolsConfig.hooks as {
+      afterToolCall: (ctx?: unknown) => Promise<void>;
+    };
+    await hooks.afterToolCall({ toolName: 'read_file', error: new Error('denied') });
     expect(order).toEqual(['existing', 'evolution']);
     expect(workspace.toolsConfig.requireApproval).toBe(true);
   });
@@ -373,7 +385,12 @@ describe('createMastraEvolution', () => {
       hooks: { afterToolCall: (ctx: unknown) => Promise<void> };
     };
     await Promise.resolve(applied.hooks.afterToolCall({ toolName: 'search' }));
+    expect(ingested).toHaveLength(0);
+    await Promise.resolve(
+      applied.hooks.afterToolCall({ toolName: 'search', error: new Error('denied') }),
+    );
     expect(ingested).toHaveLength(1);
+    expect(ingested[0]?.kind).toBe('failure');
   });
 
   it('lets options.workspace override agent.workspace', () => {
@@ -475,8 +492,13 @@ describe('createMastraEvolution', () => {
       'SKILL.md',
     );
     expect(existsSync(skillPath)).toBe(true);
-    expect(readFileSync(skillPath, 'utf8')).toContain('booked revenue');
-    expect(readFileSync(skillPath, 'utf8').split('---').length).toBeLessThan(5);
+    const markdown = readFileSync(skillPath, 'utf8');
+    expect(markdown).toContain('booked revenue');
+    expect(markdown).toContain('## When to Use');
+    expect(markdown).toContain('## Instructions');
+    expect(markdown).toContain('## Working Memory');
+    expect(markdown).toMatch(/Use when/i);
+    expect(markdown.split('---').length).toBeLessThan(5);
     const lessons = await evolution.store?.findLessons({ agentId: 'analytics-agent' });
     expect(lessons?.some((lesson) => lesson.status === 'accepted')).toBe(true);
     const events = await evolution.store?.findEvents('analytics-agent');

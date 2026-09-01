@@ -1,4 +1,4 @@
-import { InMemoryEvolutionStore } from '@mastra-evolution/core/testing';
+import { InMemoryEvolutionStore, buildEvidence } from '@mastra-evolution/core/testing';
 import { describe, expect, it } from 'vitest';
 
 import { promoteAcceptedLesson } from './promote-accepted-lesson';
@@ -27,13 +27,65 @@ describe('promoteAcceptedLesson', () => {
     const events = await store.findEvents(lesson.agentId);
     expect(events.filter((event) => event.type === 'evolution.proposal.generate')).toHaveLength(1);
   });
+
+  it('proposes an authored body instead of the lesson statement', async () => {
+    const store = new InMemoryEvolutionStore();
+    await store.putEvidence(
+      buildEvidence({
+        id: 'ev-1',
+        agentId: 'analytics-agent',
+        summary: 'Read metrics.md when quoting revenue.',
+      }),
+    );
+    const lesson = sampleLesson();
+    let captured: unknown;
+    const improvement = fakeImprovement(
+      store,
+      () => undefined,
+      (artifact) => {
+        captured = artifact;
+      },
+    );
+    await promoteAcceptedLesson({ lesson, improvement, store });
+    const artifact = captured as { name: string; description: string; markdown: string };
+    expect(artifact.name).toBe('use-booked-revenue-excluding-cancellations');
+    expect(artifact.description).toMatch(/Use when/i);
+    expect(artifact.markdown).toContain('## When to Use');
+    expect(artifact.markdown).toContain('## Instructions');
+    expect(artifact.markdown).toContain('## Working Memory');
+    expect(artifact.markdown).toContain('metrics.md');
+    expect(artifact.markdown).not.toBe(lesson.statement);
+  });
+
+  it('skips lessons that do not produce a valid practical draft', async () => {
+    const store = new InMemoryEvolutionStore();
+    let proposed = false;
+    const improvement = fakeImprovement(
+      store,
+      () => undefined,
+      () => {
+        proposed = true;
+      },
+    );
+    await promoteAcceptedLesson({
+      lesson: { ...sampleLesson(), statement: '??? !!!' },
+      improvement,
+      store,
+    });
+    expect(proposed).toBe(false);
+  });
 });
 
-function fakeImprovement(store: InMemoryEvolutionStore, onPromote: () => void): ImprovementRuntime {
+function fakeImprovement(
+  store: InMemoryEvolutionStore,
+  onPromote: () => void,
+  onPropose?: (artifact: unknown) => void,
+): ImprovementRuntime {
   return {
     autonomy: 4,
-    proposeFromLesson(lesson) {
-      const proposal = draftProposal(lesson);
+    proposeFromLesson(lesson, artifact) {
+      onPropose?.(artifact);
+      const proposal = draftProposal(lesson, artifact);
       return store.putProposal(proposal).then(async () => {
         await store.appendEvent({
           id: 'evt-generate',
@@ -80,7 +132,7 @@ function sampleLesson(): Lesson {
   };
 }
 
-function draftProposal(lesson: Lesson): ImprovementProposal {
+function draftProposal(lesson: Lesson, artifact?: unknown): ImprovementProposal {
   return {
     id: 'imp_1',
     agentId: lesson.agentId,
@@ -89,7 +141,7 @@ function draftProposal(lesson: Lesson): ImprovementProposal {
     lessonIds: [lesson.id],
     evidenceIds: [...lesson.evidenceIds],
     target: { type: 'skill' },
-    candidateArtifact: { markdown: lesson.statement },
+    candidateArtifact: artifact ?? { markdown: lesson.statement },
     status: 'draft',
     version: 0,
     createdAt: NOW,

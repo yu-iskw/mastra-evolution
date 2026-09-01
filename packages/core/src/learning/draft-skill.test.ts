@@ -5,6 +5,8 @@ import { InMemoryEvolutionStore, buildEvidence } from '../testing';
 import { createLearning } from './create-learning';
 import { draftSkillFromLesson, renderSkillMarkdown, validateSkillName } from './draft-skill';
 import { ingestEvidence } from './ingest';
+import { createTemplateSkillAuthor } from './skill-author';
+import { validatePracticalSkillArtifact } from './skill-quality';
 
 import type { Lesson } from '../domain';
 
@@ -12,7 +14,7 @@ const AGENT_A = 'analytics-agent';
 const ALICE_SCOPE = { type: 'resource' as const, resourceId: 'alice' };
 
 describe('draftSkillFromLesson', () => {
-  it('produces SKILL.md with name and description frontmatter for an accepted procedure', async () => {
+  it('authors a practical body and what+when description for an accepted procedure', async () => {
     const store = new InMemoryEvolutionStore();
     const result = await ingestEvidence(
       buildEvidence({
@@ -26,13 +28,23 @@ describe('draftSkillFromLesson', () => {
       { store, acceptThreshold: 1, sync: true },
     );
 
-    const draft = draftSkillFromLesson(result?.lesson as Lesson);
+    const draft = draftSkillFromLesson(result?.lesson as Lesson, {
+      evidenceSummaries: ['Read metrics.md with search_skills'],
+    });
     expect(draft).toBeDefined();
     expect(draft?.valid).toBe(true);
-    expect(draft?.markdown).toMatch(/^---\nname: .+\ndescription: .+\n---/);
-    expect(draft?.markdown).toContain('name: export-booked-revenue-excluding-cancellations');
-    expect(draft?.markdown).toContain('Export booked revenue excluding cancellations daily.');
+    expect(draft?.name).toBe('export-booked-revenue-excluding-cancellations');
+    expect(draft?.description).toMatch(/use when/i);
+    expect(draft?.markdown).not.toMatch(/^---/);
+    expect(draft?.markdown).toContain('## When to Use');
+    expect(draft?.markdown).toContain('## Instructions');
+    expect(draft?.markdown).toContain('## Working Memory');
+    expect(draft?.markdown).toContain('## Do Not');
+    expect(draft?.markdown).toContain('## Workspace and Tools');
+    expect(draft?.markdown).toContain('metrics.md');
+    expect(draft?.markdown).toContain('Do not store tool transcripts');
     expect(draft?.markdown).toContain(`<!-- evolution-lesson-ids: ${result?.lesson?.id}`);
+    expect(draft?.markdown).not.toBe(result?.lesson?.statement);
   });
 
   it('does not create a skill from an accepted fact lesson', async () => {
@@ -77,6 +89,9 @@ describe('draftSkillFromLesson', () => {
     expect(validateSkillName('Has Spaces')).not.toEqual([]);
     expect(validateSkillName('NotLowercase')).not.toEqual([]);
     expect(validateSkillName('a'.repeat(65))).not.toEqual([]);
+    expect(validateSkillName('-leading')).not.toEqual([]);
+    expect(validateSkillName('trailing-')).not.toEqual([]);
+    expect(validateSkillName('foo--bar')).not.toEqual([]);
 
     const draft = draftSkillFromLesson({
       id: 'les-invalid',
@@ -95,7 +110,66 @@ describe('draftSkillFromLesson', () => {
     expect(draft).toBeDefined();
     expect(draft?.valid).toBe(false);
     expect(draft?.errors.length).toBeGreaterThan(0);
-    expect(draft?.markdown).toContain('name:');
+    expect(draft?.markdown).toContain('## When to Use');
+  });
+});
+
+describe('validatePracticalSkillArtifact', () => {
+  it('rejects slogan-only name/description/body copies', () => {
+    const errors = validatePracticalSkillArtifact({
+      name: 'use-booked-revenue-excluding-cancellations',
+      description: 'Use booked revenue excluding cancellations.',
+      markdown: 'Use booked revenue excluding cancellations.',
+    });
+    expect(errors).toEqual(
+      expect.arrayContaining([
+        'thin-skill',
+        'missing-when-section',
+        'missing-working-memory-section',
+        'slogan-description',
+      ]),
+    );
+  });
+});
+
+describe('createTemplateSkillAuthor', () => {
+  it('returns undefined for non-draftable lessons and a valid draft for procedures', () => {
+    const author = createTemplateSkillAuthor();
+    const at = new Date('2026-08-31T00:00:00.000Z');
+    expect(
+      author.authorFromLesson({
+        lesson: {
+          id: 'les-fact',
+          agentId: AGENT_A,
+          scope: ALICE_SCOPE,
+          kind: 'fact',
+          statement: 'The fiscal year starts in April.',
+          evidenceIds: [],
+          confidence: 1,
+          occurrenceCount: 3,
+          firstObservedAt: at,
+          lastObservedAt: at,
+          status: 'accepted',
+        },
+      }),
+    ).toBeUndefined();
+    const draft = author.authorFromLesson({
+      lesson: {
+        id: 'les-proc',
+        agentId: AGENT_A,
+        scope: ALICE_SCOPE,
+        kind: 'procedure',
+        statement: 'Use booked revenue excluding cancellations.',
+        evidenceIds: ['ev-1'],
+        confidence: 1,
+        occurrenceCount: 3,
+        firstObservedAt: at,
+        lastObservedAt: at,
+        status: 'accepted',
+      },
+    });
+    expect(draft?.valid).toBe(true);
+    expect(draft?.description).toMatch(/Use when/i);
   });
 });
 

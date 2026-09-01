@@ -17,6 +17,9 @@
     "@mastra-evolution/core": "workspace:*",
     "@mastra/core": "1.63.2",
     "@mastra/hono": "1.7.5",
-    "hono": "4.13.0"
+    "@mastra/libsql": "1.21.1",
+    "@mastra/memory": "1.27.0",
+    "hono": "4.13.0",
+    "zod": "4.5.4"
   }
 }

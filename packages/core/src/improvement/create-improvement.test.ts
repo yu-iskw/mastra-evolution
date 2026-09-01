@@ -256,10 +256,17 @@ describe('createImprovement', () => {
     const proposed = await runtime.proposeFromLesson(sampleLesson());
     expect(proposed.target).toEqual({ type: 'skill' });
     expect(proposed.status).toBe('draft');
-    expect(proposed.candidateArtifact).toEqual({
-      markdown: sampleLesson().statement,
-      name: 'use-booked-revenue-excluding-cancellations',
-    });
+    const artifact = proposed.candidateArtifact as {
+      name: string;
+      description: string;
+      markdown: string;
+    };
+    expect(artifact.name).toBe('use-booked-revenue-excluding-cancellations');
+    expect(artifact.description).toMatch(/Use when/i);
+    expect(artifact.markdown).toContain('## When to Use');
+    expect(artifact.markdown).toContain('## Instructions');
+    expect(artifact.markdown).toContain('## Working Memory');
+    expect(artifact.markdown).not.toBe(sampleLesson().statement);
     expect(proposed.lessonIds).toEqual(['lesson-1']);
     expect(proposed.evidenceIds).toEqual(['ev-1']);
   });

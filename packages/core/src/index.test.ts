@@ -145,6 +145,8 @@ describe('core contracts', () => {
       'use-booked-revenue-excluding-cancellations',
     );
     expect(slugSkillName('???', 'skill-fallback')).toBe('skill-fallback');
+    expect(slugSkillName('???', 'skill--fallback')).toBe('skill-fallback');
+    expect(slugSkillName('???', '-skill-')).toBe('skill');
     expect(slugSkillName('???')).toBe('');
     expect(MAX_SKILL_NAME_LENGTH).toBe(64);
   });

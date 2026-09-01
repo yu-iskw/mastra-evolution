@@ -22,6 +22,7 @@ import type {
 } from '../domain';
 
 export const DEFAULT_ACCEPT_THRESHOLD = 3;
+export const MAX_EVIDENCE_IDS_PER_LESSON = 16;
 
 const EVENT_INGEST: EvolutionEventType = 'evolution.ingest';
 const EVENT_AGGREGATE: EvolutionEventType = 'evolution.lesson.aggregate';
@@ -213,7 +214,9 @@ function mergeLesson(
     threshold: number;
   },
 ): Lesson {
-  const evidenceIds = uniqueIds([...(previous?.evidenceIds ?? []), evidence.id]);
+  const evidenceIds = uniqueIds([...(previous?.evidenceIds ?? []), evidence.id]).slice(
+    -MAX_EVIDENCE_IDS_PER_LESSON,
+  );
   const occurrenceCount = (previous?.occurrenceCount ?? 0) + 1;
   const threshold = Math.max(1, input.threshold);
   const status = nextLessonStatus({

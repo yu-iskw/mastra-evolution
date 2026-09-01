@@ -5,6 +5,7 @@ import {
   parseAutonomy,
   slugSkillName,
 } from '../domain';
+import { authorSkillDraft, loadEvidenceSummaries } from '../learning/skill-author';
 
 import {
   defaultEnterprisePromotionPolicy,
@@ -139,10 +140,7 @@ async function proposeFromLesson(
     lessonIds: [lesson.id],
     evidenceIds: [...lesson.evidenceIds],
     target: { type: SKILL_TARGET_TYPE },
-    candidateArtifact: artifact ?? {
-      markdown: lesson.statement,
-      name: slugSkillName(lesson.statement, `skill-${lesson.id}`),
-    },
+    candidateArtifact: artifact ?? (await defaultSkillArtifact(deps.store, lesson)),
     status: 'draft',
     version: 0,
     createdAt: at,
@@ -404,6 +402,7 @@ async function appendEvent(
   });
 }
 
+/** Counts independent users among retained proposal.evidenceIds (lesson ring window). */
 async function countIndependentSources(
   store: EvolutionStore,
   proposal: ImprovementProposal,
@@ -420,4 +419,19 @@ async function countIndependentSources(
     identities.add(resourceId ?? item.id);
   }
   return identities.size;
+}
+
+async function defaultSkillArtifact(
+  store: EvolutionStore,
+  lesson: Lesson,
+): Promise<{ name: string; description: string; markdown: string }> {
+  const summaries = await loadEvidenceSummaries(store, lesson);
+  const draft = authorSkillDraft({ lesson, evidenceSummaries: summaries });
+  const name =
+    draft.name.length > 0 ? draft.name : slugSkillName(lesson.statement, `skill-${lesson.id}`);
+  return {
+    name,
+    description: draft.description,
+    markdown: draft.markdown,
+  };
 }

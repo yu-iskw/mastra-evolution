@@ -4,9 +4,17 @@ Plug Mastra Evolution with **learning and L4 bounded skill improvement** into an
 
 Uses model `google/gemini-flash-lite-latest` ([Google on Mastra](https://mastra.ai/models/providers/google)). Auth: `GEMINI_API_KEY` (mapped to `GOOGLE_GENERATIVE_AI_API_KEY` / `GOOGLE_API_KEY` at runtime). Do not commit API keys.
 
-The example **deletes** the sibling `.evolution/` directory at process start (store + learned skills). Curated `workspace/skills/` is not wiped.
+Ownership ([ADR-0005](../../docs/adr/0005-evolution-layer-ownership-on-existing-mastra-agents.md)): the app owns `Agent`, `Workspace`, and `Memory`; Evolution owns the sibling `.evolution/` control-plane store and learned skills. At process start the example **deletes** `.evolution/` and `.mastra/` so each run is clean. Curated `workspace/skills/` is not wiped.
 
-Put `WORKSPACE_DIR` at `{run}/workspace` so lessons land in `{run}/.evolution`.
+| Path                  | Owner        | Contents                                                       |
+| --------------------- | ------------ | -------------------------------------------------------------- |
+| `{run}/.evolution/`   | Evolution    | `evidence.json`, lessons, proposals, events, learned `skills/` |
+| `{run}/.mastra/`      | App (Mastra) | LibSQL `memory.db` for thread-scoped schema working memory     |
+| `{workspace}/skills/` | App / git    | Curated Agent Skills                                           |
+
+Successful workspace tool calls are not stored; expect few evidence rows unless you `POST /evolution/extract` procedures/corrections or tools fail.
+
+Put `WORKSPACE_DIR` at `{run}/workspace` so Evolution lessons land in `{run}/.evolution` and Memory in `{run}/.mastra`.
 
 ## Skill roots
 
@@ -44,18 +52,18 @@ curl http://localhost:4111/health
 curl http://localhost:4111/api/agents
 curl -s http://localhost:4111/api/agents/analytics-agent/generate \
   -H 'content-type: application/json' \
-  -d '{"messages":"Read metrics.md and quote Q1 booked revenue."}'
+  -d '{"messages":"Read metrics.md and quote Q1 booked revenue.","memory":{"thread":"local-self-improvement-demo","resource":"analytics-demo-user"}}'
 curl http://localhost:4111/evolution
 curl -s http://localhost:4111/evolution/extract \
   -H 'content-type: application/json' \
   -d '{"kind":"procedure","summary":"Use booked revenue excluding cancellations.","suggestedAction":"create-skill"}'
 ```
 
-Mastra also serves `/api/openapi.json` and A2A routes for the registered agent.
+Mastra also serves `/api/openapi.json` and A2A routes for the registered agent. Memory-enabled generate calls need `memory.thread` (and `memory.resource`) so thread-scoped schema working memory can persist.
 
 ## Run the 101-turn demo
 
-After an accepted procedure lesson, Evolution writes `SKILL.md` under `.evolution/skills`. Later turns must call `search_skills` / `load_skill` so the published skill is used in the same session (`SkillSearchProcessor` with `blockingRefresh: true`).
+After an accepted procedure lesson, Evolution writes a practical `SKILL.md` under `.evolution/skills` (When to Use / Instructions / Working Memory / Do Not, plus a what+when description)—not a one-line slogan. Later turns must call `search_skills` / `load_skill` so the published skill is used in the same session (`SkillSearchProcessor` with `blockingRefresh: true`). The demo passes a stable `memory.thread` / `memory.resource` so schema working memory carries procedure slots across turns.
 
 ```bash
 GEMINI_API_KEY=... pnpm --filter @mastra-evolution/example-local-self-improvement demo
@@ -66,10 +74,11 @@ Without `GEMINI_API_KEY` (or `GOOGLE_API_KEY` / `GOOGLE_GENERATIVE_AI_API_KEY`),
 ## What it wires
 
 - Existing `Agent` + `Workspace`, then `createMastraEvolution({ agent, workspace, learning: true, improvement: { autonomy: 'auto-promote-bounded' } })`
-- `new Mastra({ agents: { 'analytics-agent': agent } })` so Hono can mount `/api/agents/:agentId/generate`
+- Thread-scoped **schema** working memory (`revenueDefinition`, `sourceFile`, `lastQuotedFigure`, `lastPeriod`) via `@mastra/memory` + LibSQL under **`.mastra/memory.db`** (app-owned; not under `.evolution/`). Observational Memory is not enabled here; see [control-plane recipes](../../docs/architecture/control-plane.md) to wire `evolution.extractor()`.
+- `new Mastra({ agents: { 'analytics-agent': agent }, storage })` so Hono can mount `/api/agents/:agentId/generate`
 - Bounded skill evaluator (hobby path when Mastra experiments are not wired)
-- Publisher writes `SKILL.md` under `.evolution/skills` on promote, then records a revision
-- Store: sibling `.evolution/` of the workspace filesystem
+- Publisher writes practical `SKILL.md` under `.evolution/skills` on promote, then records a revision
+- Evolution store: sibling `.evolution/` of the workspace filesystem
 
 ## Environment
 

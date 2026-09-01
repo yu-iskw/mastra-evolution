@@ -114,6 +114,16 @@ async function ingestExtracted(
   }
 }
 
+/**
+ * Tool hooks are monitoring surfaces (Mastra afterToolCall). Only failures become
+ * Evolution evidence; successful workspace/skill tool results are skipped so the
+ * hobby store does not journal every list/read/search call.
+ */
+export function shouldIngestToolResult(context: unknown): boolean {
+  const record = isRecord(context) ? context : {};
+  return isToolFailure(record);
+}
+
 async function ingestToolResult(
   learning: ResolvedLearning,
   context: unknown,
@@ -121,6 +131,9 @@ async function ingestToolResult(
 ): Promise<void> {
   const runtime = learning.runtime;
   if (!runtime?.ingest) {
+    return;
+  }
+  if (!shouldIngestToolResult(context)) {
     return;
   }
   await runtime.ingest(toolResultToEvidence(context, agentId));

@@ -3,7 +3,12 @@ import { describe, expect, it } from 'vitest';
 import { InMemoryEvolutionStore, RecordingTelemetry, buildEvidence } from '../testing';
 
 import { createLearning } from './create-learning';
-import { DEFAULT_ACCEPT_THRESHOLD, ingestEvidence, ingestSignal } from './ingest';
+import {
+  DEFAULT_ACCEPT_THRESHOLD,
+  MAX_EVIDENCE_IDS_PER_LESSON,
+  ingestEvidence,
+  ingestSignal,
+} from './ingest';
 import { parseLearningSignal } from './parse-learning-signal';
 
 import type { Evidence, EvolutionStore, Lesson } from '../domain';
@@ -58,6 +63,32 @@ describe('ingestEvidence', () => {
     expect(lessons[0]?.status).toBe('accepted');
     expect(lessons[0]?.occurrenceCount).toBe(3);
     expect(lessons[0]?.evidenceIds).toHaveLength(3);
+    expect(lessons[0]?.confidence).toBe(1);
+  });
+
+  it('keeps a ring of recent evidenceIds while occurrenceCount grows unbounded', async () => {
+    const store = new InMemoryEvolutionStore();
+    const total = MAX_EVIDENCE_IDS_PER_LESSON + 5;
+    for (let index = 1; index <= total; index += 1) {
+      await ingestEvidence(
+        buildEvidence({
+          id: `ev-${index}`,
+          agentId: AGENT_A,
+          scope: ALICE_SCOPE,
+          kind: 'correction',
+          summary: STATEMENT,
+          provenance: { sourceIdentity: `src-${index}`, resourceId: 'alice' },
+        }),
+        { store, sync: true },
+      );
+    }
+
+    const lessons = await store.findLessons({ agentId: AGENT_A, scope: ALICE_SCOPE });
+    expect(lessons).toHaveLength(1);
+    expect(lessons[0]?.occurrenceCount).toBe(total);
+    expect(lessons[0]?.evidenceIds).toHaveLength(MAX_EVIDENCE_IDS_PER_LESSON);
+    expect(lessons[0]?.evidenceIds[0]).toBe('ev-6');
+    expect(lessons[0]?.evidenceIds.at(-1)).toBe(`ev-${total}`);
     expect(lessons[0]?.confidence).toBe(1);
   });
 

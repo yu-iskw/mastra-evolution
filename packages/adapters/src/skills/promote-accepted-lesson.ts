@@ -1,5 +1,5 @@
 import { isPlainObject as isRecord, stringField } from '@mastra-evolution/core';
-import { draftSkillFromLesson } from '@mastra-evolution/core/learning';
+import { draftSkillFromLesson, loadEvidenceSummaries } from '@mastra-evolution/core/learning';
 
 import type { EvolutionStore, ImprovementProposal, Lesson } from '@mastra-evolution/core';
 import type { ImprovementRuntime } from '@mastra-evolution/core/improvement';
@@ -18,7 +18,8 @@ export async function promoteAcceptedLesson(input: {
   store: EvolutionStore;
 }): Promise<void> {
   const { lesson, improvement, store } = input;
-  const draft = draftSkillFromLesson(lesson);
+  const evidenceSummaries = await loadEvidenceSummaries(store, lesson);
+  const draft = draftSkillFromLesson(lesson, { evidenceSummaries });
   if (draft === undefined || !draft.valid) {
     return;
   }
@@ -36,7 +37,7 @@ export async function promoteAcceptedLesson(input: {
           await improvement.proposeFromLesson(lesson, {
             name: draft.name,
             description: draft.description,
-            markdown: lesson.statement,
+            markdown: draft.markdown,
           })
         ).id
       : existing.id;

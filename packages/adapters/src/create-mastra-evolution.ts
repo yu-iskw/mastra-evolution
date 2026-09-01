@@ -47,13 +47,19 @@ import type { IngestResult } from '@mastra-evolution/core/learning';
 /**
  * Plug Evolution into an existing Mastra Agent without subclassing.
  *
- * Pass `workspace` for a real Mastra Agent (`#workspace` is private; `getWorkspace()`
- * is async). Duck-typed `agent.workspace` still works. Merges `afterToolCall` into
- * workspace `tools.hooks` when `setToolsConfig` exists, and infers a local store
- * beside the workspace filesystem when `learning: true`.
+ * Ownership (ADR-0005): the app owns `Agent`, `Workspace`, and optional `Memory`.
+ * This factory never constructs Memory, never sets `agent.memory`, and never wraps
+ * `generate`/`stream`. It mutates only workspace `tools.hooks.afterToolCall` when
+ * `setToolsConfig` exists (failures only). `agent` is used for id + capability probe;
+ * pass `workspace` for a real Mastra Agent (`#workspace` is private).
  *
- * `register(agent)` returns the same object identity (`Object.is`) and does not wrap
- * `agent.constructor`. `applyToCall` is an escape hatch for assigned tools.
+ * Evidence ingress priority: OM / explicit `onExtracted` → workspace failure hooks →
+ * (future) Feedback. Procedures and corrections need extractors or `/evolution/extract`;
+ * successful tool results are not journaled.
+ *
+ * Infers a local store under sibling `.evolution/` when learning/improvement need it.
+ * `register(agent)` is an identity stub (`Object.is`). `applyToCall` is an escape hatch
+ * for assigned tools.
  */
 export function createMastraEvolution(options: CreateMastraEvolutionOptions): MastraEvolution {
   const workspace = resolveAttachedWorkspace(options);

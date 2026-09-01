@@ -45,7 +45,7 @@ const evolution = createMastraEvolution({
 await agent.generate('What is booked revenue?');
 ```
 
-The factory binds the Workspace you pass (Mastra Agent keeps workspace private). It merges `afterToolCall` into workspace `tools.hooks` when `setToolsConfig` exists, and infers a local store beside the workspace filesystem. There is no `forAgent()` spread and no `SelfImprovingAgent`.
+The factory binds the Workspace you pass (Mastra Agent keeps workspace private). It merges `afterToolCall` into workspace `tools.hooks` when `setToolsConfig` exists, and infers a local store beside the workspace filesystem. There is no `forAgent()` spread and no `SelfImprovingAgent`. Evolution never constructs or sets `agent.memory` ([ADR-0005](docs/adr/0005-evolution-layer-ownership-on-existing-mastra-agents.md)).
 
 Promoted skills write under sibling `.evolution/skills`, not git-managed `workspace/skills/`. Learning can run without improvement (`learning: true` only) when you want lessons without skill publication. For visibility into agent runs, use [Mastra observability](https://mastra.ai/docs/observability/overview). Advanced factories live on `@mastra-evolution/core/learning` and `@mastra-evolution/core/improvement`. `applyToCall` is an escape hatch for assigned/non-workspace tools. `register(agent)` is identity-only.
 

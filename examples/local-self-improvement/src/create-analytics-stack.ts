@@ -6,8 +6,11 @@ import { Mastra } from '@mastra/core';
 import { Agent } from '@mastra/core/agent';
 import { SkillSearchProcessor } from '@mastra/core/processors';
 import { LocalFilesystem, Workspace } from '@mastra/core/workspace';
+import { LibSQLStore } from '@mastra/libsql';
+import { Memory } from '@mastra/memory';
 import { createMastraEvolution, resolveEvolutionWorkspaceLayout } from '@mastra-evolution/adapters';
 import { slugSkillName } from '@mastra-evolution/core';
+import { z } from 'zod';
 
 import { applyGeminiApiKey, readEnv } from './env';
 
@@ -17,6 +20,20 @@ const MODEL = 'google/gemini-flash-lite-latest';
 export const AGENT_ID = 'analytics-agent';
 export const BOOKED_REVENUE_LESSON = 'Use booked revenue excluding cancellations.';
 export const SKILL_DIR_NAME = slugSkillName(BOOKED_REVENUE_LESSON);
+/** Stable demo thread for schema working memory across generate turns. */
+export const DEMO_THREAD_ID = 'local-self-improvement-demo';
+export const DEMO_RESOURCE_ID = 'analytics-demo-user';
+
+/**
+ * App-owned domain Σ for analytics procedures. Reused across skills; not
+ * inferred per lesson (see ADR-0004). Schema WM uses merge + null-delete.
+ */
+export const analyticsWorkingMemorySchema = z.object({
+  revenueDefinition: z.string().nullable(),
+  sourceFile: z.string().nullable(),
+  lastQuotedFigure: z.string().nullable(),
+  lastPeriod: z.string().nullable(),
+});
 
 export interface AnalyticsStack {
   readonly agent: Agent;
@@ -41,15 +58,19 @@ export interface EvolutionSnapshot {
 
 /**
  * Existing Mastra Agent + Workspace, then Evolution learning and L4 skill
- * improvement. Resets sibling `.evolution/` (store + learned skills) so each
- * process starts clean. Curated `workspace/skills/` is left for git-managed skills.
+ * improvement. Resets sibling `.evolution/` (Evolution store + learned skills) and
+ * sibling `.mastra/` (app-owned Mastra Memory / LibSQL) so each process starts clean.
+ * Curated `workspace/skills/` is left for git-managed skills.
  * Register the agent on a `Mastra` instance in code — server adapters do not discover files.
  */
 export async function createAnalyticsStack(): Promise<AnalyticsStack> {
   applyGeminiApiKey();
   const workspaceDir = path.resolve(readEnv('WORKSPACE_DIR') ?? '.workspace');
   const layout = resolveEvolutionWorkspaceLayout(workspaceDir);
-  await resetPriorState(layout.storeDirectory);
+  const mastraDir = path.join(path.dirname(layout.basePath), '.mastra');
+  await resetPriorState(layout.storeDirectory, mastraDir);
+  await mkdir(layout.storeDirectory, { recursive: true });
+  await mkdir(mastraDir, { recursive: true });
   await seedWorkspace(layout);
   const workspace = new Workspace({
     id: 'analytics-workspace',
@@ -66,6 +87,21 @@ export async function createAnalyticsStack(): Promise<AnalyticsStack> {
     blockingRefresh: true,
     search: { topK: 5, minScore: 0 },
   });
+  // App-owned Mastra Memory persistence — outside `.evolution/` (ADR-0005).
+  const memoryStorage = new LibSQLStore({
+    id: 'analytics-memory',
+    url: `file:${path.join(mastraDir, 'memory.db')}`,
+  });
+  const memory = new Memory({
+    storage: memoryStorage,
+    options: {
+      workingMemory: {
+        enabled: true,
+        scope: 'thread',
+        schema: analyticsWorkingMemorySchema,
+      },
+    },
+  });
   const agent = new Agent({
     id: AGENT_ID,
     name: AGENT_ID,
@@ -73,10 +109,13 @@ export async function createAnalyticsStack(): Promise<AnalyticsStack> {
       'You are an analytics assistant.',
       'When a relevant Agent Skill exists, call search_skills then load_skill before answering.',
       'Prefer loaded skill instructions over glossary.md once a booked-revenue skill is available.',
+      'After loading a skill, update working-memory slots named in its Working Memory section',
+      '(revenueDefinition, sourceFile, lastQuotedFigure, lastPeriod) instead of relying on tool transcripts.',
       'Keep answers to a few sentences.',
     ].join(' '),
     model: MODEL,
     workspace,
+    memory,
     inputProcessors: [skillSearch],
   });
   const evolution = createMastraEvolution({
@@ -87,6 +126,7 @@ export async function createAnalyticsStack(): Promise<AnalyticsStack> {
   });
   const mastra = new Mastra({
     agents: { [AGENT_ID]: agent },
+    storage: memoryStorage,
     logger: false,
   });
   return {
@@ -151,8 +191,9 @@ async function listSkillMarkdown(skillsDir: string): Promise<string[]> {
   }
 }
 
-async function resetPriorState(storeDirectory: string): Promise<void> {
+async function resetPriorState(storeDirectory: string, mastraDirectory: string): Promise<void> {
   await rm(storeDirectory, { recursive: true, force: true });
+  await rm(mastraDirectory, { recursive: true, force: true });
 }
 
 async function seedWorkspace(layout: EvolutionWorkspaceLayout): Promise<void> {

@@ -75,7 +75,13 @@ describe('localEvolutionPreset', () => {
       'SKILL.md',
     );
     expect(existsSync(skillPath)).toBe(true);
-    expect(readFileSync(skillPath, 'utf8')).toContain('booked revenue');
+    const markdown = readFileSync(skillPath, 'utf8');
+    expect(markdown).toContain('booked revenue');
+    expect(markdown).toContain('## When to Use');
+    expect(markdown).toContain('## Instructions');
+    expect(markdown).toContain('## Working Memory');
+    expect(markdown).toMatch(/Use when/i);
+    expect(markdown).not.toBe('Use booked revenue excluding cancellations.');
     const events = await preset.store.findEvents(AGENT_ID);
     expect(events.filter((event) => event.type === 'evolution.promote')).toHaveLength(1);
   });

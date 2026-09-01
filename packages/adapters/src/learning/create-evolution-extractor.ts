@@ -12,7 +12,8 @@ export interface EvolutionExtractor extends MastraExtractorFragment {
 
 /**
  * Documented Observational Memory Extractor shape (`name`, `instructions`, `onExtracted`).
- * Apps that still construct `Memory` pass this into `observationalMemory.observation.extract`.
+ * Apps that construct `Memory` pass this into `observationalMemory.observation.extract`
+ * or call `onExtracted` explicitly. Evolution never sets `agent.memory`.
  * Does not require `@mastra/memory` (optional peer).
  */
 export function createEvolutionExtractor(fragment?: MastraExtractorFragment): EvolutionExtractor {

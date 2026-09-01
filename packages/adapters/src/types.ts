@@ -57,6 +57,7 @@ export interface ImprovementConfig {
 export interface CreateMastraEvolutionOptions {
   /**
    * Existing Mastra Agent (or duck-type with `id`/`name` and optional `workspace`).
+   * Used for agent id and capability probe only — never mutated, never given Memory.
    * Real Mastra Agents keep workspace private — pass `workspace` as well.
    * Duck-typed `agent.workspace` is still read when `workspace` is omitted.
    */
@@ -64,6 +65,8 @@ export interface CreateMastraEvolutionOptions {
   /**
    * Workspace to bind hooks and hobby store/skills paths.
    * Required for a real Mastra Agent. Wins over duck-typed `agent.workspace`.
+   * Evolution may merge `tools.hooks.afterToolCall` (failures only); it does not
+   * replace the Workspace or touch Memory.
    */
   workspace?: unknown;
   learning?: boolean | LearningLike | LearningConfig;
@@ -81,9 +84,22 @@ export interface MastraEvolutionHooks {
 }
 
 export interface MastraEvolution {
+  /**
+   * Duck-typed Mastra capability probe. `feedback` is informational only until a
+   * Feedback→ingest adapter ships; Evolution does not auto-bridge observability.
+   */
   capabilities: MastraCapabilities;
+  /**
+   * Learning extractor fragments (primary procedure/correction ingress when wired
+   * by the app into Observational Memory or called via `onExtracted`).
+   */
   extractors: MastraExtractorFragment[];
+  /** Reserved processor list; unused in the default attach path. */
   processors: unknown[];
+  /**
+   * Workspace/call hooks Evolution may merge. Default `afterToolCall` journals
+   * tool **failures** only (not successful tool results).
+   */
   hooks: MastraEvolutionHooks;
   store?: EvolutionStore;
   learning?: LearningLike;
@@ -94,13 +110,15 @@ export interface MastraEvolution {
    */
   applyToCall<T extends Record<string, unknown> = Record<string, unknown>>(callOptions?: T): T;
   /**
-   * Returns the same agent identity (`Object.is`). Does not wrap or subclass.
-   * Prefer `createMastraEvolution({ agent, workspace })`, which plugs workspace hooks.
+   * Compatibility stub: returns the same agent identity (`Object.is`). Does not
+   * wrap, subclass, or mutate Memory. Prefer `createMastraEvolution({ agent, workspace })`,
+   * which already plugs workspace hooks.
    */
   register<T>(agent: T): T;
   /**
    * Observational Memory extractor fragment for apps that still construct `Memory`.
-   * Not required to plug an existing agent.
+   * Pass into `observationalMemory.observation.extract` (or call `onExtracted` from
+   * HTTP `/evolution/extract`). Evolution never auto-attaches this to `agent.memory`.
    */
   extractor(): MastraExtractorFragment & { name: string; instructions: string };
 }

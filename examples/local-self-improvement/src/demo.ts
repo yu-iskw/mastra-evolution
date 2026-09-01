@@ -1,5 +1,7 @@
 import {
   BOOKED_REVENUE_LESSON,
+  DEMO_RESOURCE_ID,
+  DEMO_THREAD_ID,
   SKILL_DIR_NAME,
   createAnalyticsStack,
   evolutionSnapshot,
@@ -84,7 +86,13 @@ async function generateWithRetry(agent: Agent, prompt: string, turn: number): Pr
   let lastError: unknown;
   for (let attempt = 1; attempt <= 6; attempt += 1) {
     try {
-      return await agent.generate(prompt, { maxSteps: 8 });
+      return await agent.generate(prompt, {
+        maxSteps: 8,
+        memory: {
+          thread: DEMO_THREAD_ID,
+          resource: DEMO_RESOURCE_ID,
+        },
+      });
     } catch (error: unknown) {
       lastError = error;
       const delayMs = backoffMs(attempt);
