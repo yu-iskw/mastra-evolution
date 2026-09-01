@@ -28,7 +28,7 @@ export const DEMO_RESOURCE_ID = 'analytics-demo-user';
  * App-owned domain Σ for analytics procedures. Reused across skills; not
  * inferred per lesson (see ADR-0004). Schema WM uses merge + null-delete.
  */
-export const analyticsWorkingMemorySchema = z.object({
+const analyticsWorkingMemorySchema = z.object({
   revenueDefinition: z.string().nullable(),
   sourceFile: z.string().nullable(),
   lastQuotedFigure: z.string().nullable(),
