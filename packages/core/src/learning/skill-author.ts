@@ -294,16 +294,23 @@ function isToolName(token: string): boolean {
 }
 
 function spokenPhrase(statement: string): string {
-  return oneLine(statement)
-    .replace(/[.]+$/u, '')
+  return stripTrailingPeriods(oneLine(statement))
     .replace(/^(use|prefer|apply|always)\s+/iu, '')
     .trim()
     .toLowerCase();
 }
 
 function headingTitle(statement: string): string {
-  const title = oneLine(statement).replace(/[.]+$/u, '');
+  const title = stripTrailingPeriods(oneLine(statement));
   return title.length > 0 ? title : 'Skill';
+}
+
+function stripTrailingPeriods(text: string): string {
+  let end = text.length;
+  while (end > 0 && text.charAt(end - 1) === '.') {
+    end -= 1;
+  }
+  return text.slice(0, end);
 }
 
 function punctuate(text: string): string {
