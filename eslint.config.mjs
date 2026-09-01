@@ -31,7 +31,7 @@ const importXSettings = {
   'import-x/resolver': {
     typescript: {
       alwaysTryTypes: true,
-      project: ['packages/*/tsconfig.json'],
+      project: ['packages/*/tsconfig.json', 'examples/*/tsconfig.json'],
     },
     node: true,
   },
@@ -79,12 +79,12 @@ const sharedTsRules = Object.assign({}, tseslint.configs['recommended-type-check
   'no-new-func': 'error',
   'prefer-const': 'error',
   'max-lines-per-function': ['error', { max: 280 }],
-  'max-depth': ['error', { max: 6 }],
-  'max-params': ['error', { max: 8 }],
-  'max-nested-callbacks': ['error', { max: 4 }],
+  'max-depth': ['error', { max: 4 }],
+  'max-params': ['error', { max: 5 }],
+  'max-nested-callbacks': ['error', { max: 3 }],
   // SonarJS
-  'sonarjs/cyclomatic-complexity': ['error', { threshold: 20 }],
-  'sonarjs/cognitive-complexity': ['error', 20],
+  'sonarjs/cyclomatic-complexity': ['error', { threshold: 12 }],
+  'sonarjs/cognitive-complexity': ['error', 12],
   'sonarjs/no-duplicate-string': 'error',
   'sonarjs/prefer-immediate-return': 'error',
   'no-unreachable': 'error',
@@ -167,6 +167,24 @@ export default [
     },
   },
   {
+    files: ['packages/core/**/*.ts'],
+    ignores: ['**/dist/**'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['@mastra/*', '@mastra-evolution/adapters', '@mastra-evolution/adapters/*'],
+              message:
+                '@mastra-evolution/core must stay Mastra-free; Mastra APIs belong in @mastra-evolution/adapters.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
     files: ['packages/**/*.test.ts', 'packages/**/*.test.tsx'],
     ignores: ['**/dist/**'],
     languageOptions: {
@@ -191,10 +209,35 @@ export default [
       ...securityRecommended.rules,
       ...sharedTsRules,
       ...vitestPlugin.configs.recommended.rules,
+      'vitest/expect-expect': ['error', { assertFunctionNames: ['expect', 'expectTypeOf'] }],
       // Tests often repeat string literals and use conditional expects; keep signal without noise.
       'vitest/no-conditional-expect': 'off',
       'sonarjs/no-duplicate-string': 'off',
       'max-lines-per-function': ['error', { max: 700 }],
+      'unicorn/filename-case': unicornFilenameCase,
+    },
+  },
+  {
+    files: ['examples/**/*.ts'],
+    ignores: ['**/dist/**'],
+    languageOptions: {
+      parser: tsparser,
+      parserOptions: {
+        ecmaVersion: 2022,
+        sourceType: 'module',
+      },
+    },
+    plugins: {
+      ...importXPlugins,
+      ...securityRecommended.plugins,
+      unicorn,
+    },
+    settings: importXSettings,
+    rules: {
+      ...importXRules,
+      ...securityRecommended.rules,
+      'import-x/no-unresolved': 'off',
+      'security/detect-object-injection': 'off',
       'unicorn/filename-case': unicornFilenameCase,
     },
   },
