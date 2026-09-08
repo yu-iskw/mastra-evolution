@@ -39,6 +39,7 @@ const MISSING_EVALUATOR_ERROR =
   'No ImprovementEvaluator is configured. Pass evaluator to createImprovement before publishing.';
 const MISSING_PROPOSAL_ERROR = 'Improvement proposal was not found';
 const SKILL_TARGET_TYPE = 'skill' as const;
+const STATUS_ROLLED_BACK = 'rolled-back';
 const EVENT_PROMOTE: EvolutionEventType = 'evolution.promote';
 
 export interface CreateImprovementOptions {
@@ -60,6 +61,7 @@ export interface ImprovementRuntime {
   evaluate(proposalId: string, context?: EvaluationContext): Promise<ImprovementProposal>;
   promote(proposalId: string): Promise<ImprovementProposal>;
   rollback(proposalId: string): Promise<ImprovementProposal>;
+  reject(proposalId: string): Promise<ImprovementProposal>;
 }
 
 type EvaluatedProposal = ImprovementProposal & { evaluation: ImprovementEvaluation };
@@ -104,6 +106,13 @@ export function createImprovement(options: CreateImprovementOptions): Improvemen
       ),
     promote: (proposalId) =>
       runSpanned(deps, EVENT_PROMOTE, () => promoteProposal(deps, proposalId)),
+    reject: async (proposalId) => {
+      const proposal = await requireProposal(deps, proposalId);
+      if (proposal.status === 'published' || proposal.status === STATUS_ROLLED_BACK) {
+        throw new Error('A published change must be reverted, not rejected');
+      }
+      return persistStatus(deps, proposal, 'rejected', { reason: 'Rejected by reviewer' });
+    },
     rollback: (proposalId) =>
       runSpanned(deps, 'evolution.rollback', () => rollbackProposal(deps, proposalId)),
   };
@@ -160,6 +169,9 @@ async function evaluateProposal(
   context: EvaluationContext,
 ): Promise<EvaluatedProposal> {
   const proposal = await requireProposal(deps, proposalId);
+  if (['published', 'rejected', STATUS_ROLLED_BACK].includes(proposal.status)) {
+    throw new Error('Create a new proposal to evaluate a completed change');
+  }
   if (!deps.experimentsAvailable || !deps.evaluator) {
     return persistEvaluation(deps, proposal, {
       verdict: 'inconclusive',
@@ -182,6 +194,9 @@ async function promoteProposal(
   proposalId: string,
 ): Promise<ImprovementProposal> {
   const proposal = await requireProposal(deps, proposalId);
+  if (['published', 'rejected', STATUS_ROLLED_BACK].includes(proposal.status)) {
+    return proposal;
+  }
   if (!requiresEvaluation(deps.autonomy)) {
     return applyDecision(
       deps,
@@ -194,6 +209,9 @@ async function promoteProposal(
       ? await evaluateProposal(deps, proposalId, {})
       : { ...proposal, evaluation: proposal.evaluation };
   const { evaluation } = evaluated;
+  if (evaluation.verdict === 'inconclusive') {
+    return evaluated;
+  }
   const independentSourceCount = isOrganizationScope(evaluated.scope)
     ? await countIndependentSources(deps.store, evaluated)
     : 0;
@@ -209,14 +227,17 @@ async function rollbackProposal(
   proposalId: string,
 ): Promise<ImprovementProposal> {
   const proposal = await requireProposal(deps, proposalId);
-  let previousRevision = proposal.baselineRevision;
-  if (deps.publisher?.rollback) {
-    const rolled = await deps.publisher.rollback(proposal);
-    previousRevision = rolled.revision;
+  if (proposal.status === STATUS_ROLLED_BACK) {
+    return proposal;
   }
+  if (proposal.status !== 'published' || !deps.publisher?.rollback) {
+    throw new Error('Only published proposals with a rollback-capable publisher can be reverted');
+  }
+  const rolled = await deps.publisher.rollback(proposal);
+  const previousRevision = rolled.revision;
   const next: ImprovementProposal = {
     ...proposal,
-    status: 'rolled-back',
+    status: STATUS_ROLLED_BACK,
     candidateRevision: previousRevision,
     updatedAt: deps.now(),
   };
@@ -291,9 +312,6 @@ async function publishApproved(
     return approved;
   }
 
-  if (deps.publisher.writeDraft) {
-    await deps.publisher.writeDraft(approved);
-  }
   const publishedRevision = await deps.publisher.publish(approved);
   const published: ImprovementProposal = {
     ...approved,

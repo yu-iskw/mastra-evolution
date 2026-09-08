@@ -116,7 +116,16 @@ export class LocalEvolutionStore implements EvolutionStore {
       const existing = this.proposals.get(proposal.id);
       assertProposalWriteAllowed(existing, proposal);
       this.proposals.set(proposal.id, cloneProposal(proposal));
-      await this.persistProposals();
+      try {
+        await this.persistProposals();
+      } catch (error: unknown) {
+        if (existing) {
+          this.proposals.set(proposal.id, existing);
+        } else {
+          this.proposals.delete(proposal.id);
+        }
+        throw error;
+      }
     });
   }
 

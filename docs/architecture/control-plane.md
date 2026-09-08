@@ -1,4 +1,10 @@
-# Evolution control plane vs Mastra runtime
+# Skill Loop and the Mastra runtime
+
+The current product contract is [ADR-0006](../adr/0006-reviewed-skill-loop.md).
+The historical architecture below explains the existing integration boundaries.
+References to automatic promotion are subject to explicit review for structural-only
+validation; rollback now restores content, not just metadata. See the
+[migration guide](../skill-loop-migration.md).
 
 Mastra Evolution is the **control plane** for evidence-driven learning and improvement. Mastra remains the **runtime** that executes agents. This note records the split implementers should preserve. Normative ownership: [ADR-0005](../adr/0005-evolution-layer-ownership-on-existing-mastra-agents.md).
 

@@ -26,6 +26,7 @@ const VALIDATE_APPROVAL_REASON = 'autonomy validate requires approval';
 const SENSITIVE_CONTENT_REASON = 'credentials/security content';
 const UNSAFE_TARGET_REASON = 'target is not auto-mutable';
 const EVALUATION_FAILED_REASON = 'evaluation failed';
+const REQUEST_APPROVAL = 'request-approval';
 const PUBLISH_DECISION: PromotionDecision = { decision: 'publish' };
 
 const DEFAULT_INDEPENDENT_SOURCES = 2;
@@ -109,9 +110,12 @@ export function securityPolicy(): PromotionPolicy {
 }
 
 export function approvalAutonomyPolicy(): PromotionPolicy {
-  return syncPolicy((proposal, _evaluation, context) =>
-    promotionDecisionForAutonomy(proposal, context),
-  );
+  return syncPolicy((proposal, evaluation, context) => {
+    if (evaluation.kind === 'structural' && context.autonomy >= 4) {
+      return { decision: REQUEST_APPROVAL, reason: 'Structural validation requires human review' };
+    }
+    return promotionDecisionForAutonomy(proposal, context);
+  });
 }
 
 export function defaultHobbyPromotionPolicy(): PromotionPolicy {
@@ -143,7 +147,7 @@ export function independentUsersScopePromotionPolicy(
 }
 
 function alwaysRequestApprovalPolicy(): PromotionPolicy {
-  return syncPolicy(() => ({ decision: 'request-approval', reason: ENTERPRISE_APPROVAL_REASON }));
+  return syncPolicy(() => ({ decision: REQUEST_APPROVAL, reason: ENTERPRISE_APPROVAL_REASON }));
 }
 
 function syncPolicy(
@@ -173,7 +177,7 @@ export function promotionDecisionForAutonomy(
       return { decision: 'reject', reason: RECOMMEND_ONLY_REASON };
     }
     case 3: {
-      return { decision: 'request-approval', reason: VALIDATE_APPROVAL_REASON };
+      return { decision: REQUEST_APPROVAL, reason: VALIDATE_APPROVAL_REASON };
     }
     case 4:
     case 5: {

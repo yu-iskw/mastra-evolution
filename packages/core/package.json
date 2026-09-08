@@ -1,7 +1,7 @@
 {
   "name": "@mastra-evolution/core",
   "version": "0.1.0",
-  "description": "Framework-neutral Evolution domain: types, learning, improvement, and stores.",
+  "description": "Skill Loop domain, lessons, review workflow, and stores",
   "keywords": [
     "mastra",
     "evolution",

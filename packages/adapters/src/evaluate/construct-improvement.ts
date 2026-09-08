@@ -41,7 +41,8 @@ export function constructImprovement(input: {
     policy: input.policy,
     autonomy: input.autonomy,
     experimentsAvailable:
-      input.experimentsAvailable ?? level >= parseAutonomy(HOBBY_SKILL_AUTONOMY),
+      input.experimentsAvailable ??
+      (input.evaluator !== undefined || level >= parseAutonomy(HOBBY_SKILL_AUTONOMY)),
     telemetry: input.telemetry,
     now: input.now,
     id: input.id,
