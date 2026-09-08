@@ -21,12 +21,15 @@ lint:
     - checkov
     - trufflehog
     - markdownlint
+    # Type-aware ESLint and import-x need the pnpm workspace graph. Trunk's
+    # hermetic ESLint sandbox cannot resolve @mastra-evolution/* packages, so
+    # CI runs `pnpm lint:eslint` in GitHub Actions instead.
+    - eslint
   enabled:
     # - semgrep@1.155.0
     - stylelint@17.14.1
     - markdown-link-check@3.15.0
     - markdownlint-cli2@0.23.2
-    - eslint@10.8.0
     - taplo@0.10.0
     - shellcheck@0.11.0
     - shfmt@3.6.0

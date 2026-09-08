@@ -1,0 +1,21 @@
+{
+  "name": "@mastra-evolution/example-cloud-run-a2a",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Hono HTTP/A2A server: Evolution on Cloud Run with PostgreSQL state.",
+  "license": "Apache-2.0",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js"
+  },
+  "dependencies": {
+    "@hono/node-server": "2.1.1",
+    "@mastra-evolution/adapters": "workspace:*",
+    "@mastra-evolution/core": "workspace:*",
+    "@mastra/core": "1.63.2",
+    "@mastra/hono": "1.7.5",
+    "hono": "4.13.4"
+  }
+}

@@ -63,3 +63,6 @@ jobs:
 
       - name: Run build
         run: pnpm build
+
+      - name: Compile examples
+        run: pnpm build:examples

@@ -16,7 +16,7 @@ Production-ready **TypeScript monorepo** template:
 
 - **Package manager:** pnpm (workspace); see **pnpm workspace** below
 - **Runtime:** Node.js (see `.node-version`)
-- **Build:** tsc / pnpm scripts
+- **Build:** TypeScript 6 (`tsc`) / pnpm scripts
 - **Lint / format:** Trunk (ESLint, Prettier, and more)
 - **Tests:** Vitest
 - **CI/CD:** `.github/workflows/`
@@ -110,3 +110,4 @@ When you want durable fixes (not one-off chat advice):
 - Do not install Trunk-managed linters globally; versions live in `.trunk/trunk.yaml`
 - Commit **`pnpm-lock.yaml`**
 - After `pnpm install`, Trunk is under `node_modules/.bin`; pin is in `.trunk/trunk.yaml` (`cli.version`). Run `pnpm exec trunk install` if formatters/linters are missing
+- **TypeScript 6:** `types` defaults to `[]` (Node globals are not auto-included). Shared compiler options live in `tsconfig.base.json`. Package configs should extend it and only set `outDir` / `rootDir`.

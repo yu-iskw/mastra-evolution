@@ -1,0 +1,25 @@
+{
+  "name": "@mastra-evolution/example-local-self-improvement",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Hono HTTP server for Evolution learning plus L4 skill improvement on an existing agent.",
+  "license": "Apache-2.0",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "demo": "node dist/demo.js"
+  },
+  "dependencies": {
+    "@hono/node-server": "2.1.1",
+    "@mastra-evolution/adapters": "workspace:*",
+    "@mastra-evolution/core": "workspace:*",
+    "@mastra/core": "1.63.2",
+    "@mastra/hono": "1.7.5",
+    "@mastra/libsql": "1.21.1",
+    "@mastra/memory": "1.27.0",
+    "hono": "4.13.0",
+    "zod": "4.5.4"
+  }
+}

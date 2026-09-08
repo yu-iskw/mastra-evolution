@@ -1,0 +1,6 @@
+# Transitive findings that cannot be patched in this repo.
+# osv-scanner discovers this file next to pnpm-lock.yaml.
+
+[[IgnoredVulns]]
+id = "GHSA-866g-f22w-33x8"
+reason = "@mastra/core pins the AI SDK v5 alias to @ai-sdk/provider-utils@3.0.30; the 3.x line has no patch (CVE-2026-8769). Track mastra-ai/mastra#22592. This repo's 4.x/5.x copies are already past the advisory floor."

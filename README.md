@@ -1,62 +1,75 @@
-# {PROJECT_NAME}
+# Mastra Evolution
 
-{PROJECT_DESCRIPTION}
+Self-learning and self-improvement **control plane** for [Mastra](https://mastra.ai/) agents. Apache-2.0.
 
-## Getting Started
+Attach Evolution to an **existing** Mastra `Agent` without subclassing. Mastra runs the agent. Evolution ingests evidence, records scoped lessons, and (when enabled) proposes, evaluates, and promotes skill revisions.
 
-### Prerequisites
+Learning and improvement are independently enableable: you can persist lessons with no skill publication.
 
-- [pnpm](https://pnpm.io/) **11.x** (see `packageManager` in `package.json`; use [Corepack](https://nodejs.org/api/corepack.html): `corepack enable`)
-- Node.js **22+** (see `engines` in `package.json`; `.node-version` pins the version used for local dev and CI)
+## Packages
 
-Dependency installs follow pnpm 11 supply-chain settings in [`pnpm-workspace.yaml`](pnpm-workspace.yaml): **minimum release age** (this template uses a **7-day** quarantine, stricter than pnpm’s built-in 24-hour default), **blocking exotic transitive dependencies**, and an **`allowBuilds`** allowlist for packages that run install scripts. See [pnpm 11 release notes](https://pnpm.io/blog/releases/11.0) and [Supply-chain defaults (Socket)](https://socket.dev/blog/pnpm-11-adds-new-supply-chain-protection-defaults).
+| Package                      | Role                                                                                                        |
+| ---------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| `@mastra-evolution/core`     | Domain types. Subpaths: `./learning`, `./improvement`, `./storage-local`, `./storage-postgres`, `./testing` |
+| `@mastra-evolution/adapters` | Mastra adapter (`createMastraEvolution`) and presets (`@mastra-evolution/adapters/presets`)                 |
 
-Linting and formatting use [Trunk](https://trunk.io/) (ESLint, Prettier, and more). The Trunk **launcher** is installed with project dependencies—you do not need a separate Trunk install for the default workflow.
+Public attach API — existing Agent, then one factory call. Workspace appears once, on the Agent:
 
-### Installation
+```ts
+const layout = resolveEvolutionWorkspaceLayout(directory);
+
+const workspace = new Workspace({
+  id: 'analytics-workspace',
+  filesystem: new LocalFilesystem({
+    basePath: layout.basePath,
+    allowedPaths: [...layout.allowedPaths],
+  }),
+  // curated (git) first, learned (`.evolution/skills`) second
+  skills: [...layout.skills],
+});
+
+const agent = new Agent({
+  id: 'analytics-agent',
+  model: 'openai/gpt-5.6-sol',
+  workspace,
+  memory, // whatever the app already uses
+});
+
+const evolution = createMastraEvolution({
+  agent,
+  workspace,
+  learning: true,
+  improvement: { autonomy: 'auto-promote-bounded' },
+});
+
+await agent.generate('What is booked revenue?');
+```
+
+The factory binds the Workspace you pass (Mastra Agent keeps workspace private). It merges `afterToolCall` into workspace `tools.hooks` when `setToolsConfig` exists, and infers a local store beside the workspace filesystem. There is no `forAgent()` spread and no `SelfImprovingAgent`. Evolution never constructs or sets `agent.memory` ([ADR-0005](docs/adr/0005-evolution-layer-ownership-on-existing-mastra-agents.md)).
+
+Promoted skills write under sibling `.evolution/skills`, not git-managed `workspace/skills/`. Learning can run without improvement (`learning: true` only) when you want lessons without skill publication. For visibility into agent runs, use [Mastra observability](https://mastra.ai/docs/observability/overview). Advanced factories live on `@mastra-evolution/core/learning` and `@mastra-evolution/core/improvement`. `applyToCall` is an escape hatch for assigned/non-workspace tools. `register(agent)` is identity-only.
+
+**Supported Mastra:** `@mastra/core` `>=1.63.0 <2` (verified `1.63.2`).
+
+## Quickstart (local self-improvement)
+
+No PostgreSQL, queue, or live model is required to compile or to skip-run the example.
 
 ```bash
 pnpm install
-```
-
-Optional: prefetch Trunk’s hermetic tools (helpful for offline work or CI images):
-
-```bash
-pnpm exec trunk install
-```
-
-If you prefer a global `trunk` on your PATH, see the [Trunk installation guide](https://docs.trunk.io/references/cli/getting-started/install) (e.g. `brew install trunk-io` on macOS).
-
-### Supply-chain protections
-
-The template uses **pnpm 11** with settings in [`pnpm-workspace.yaml`](pnpm-workspace.yaml): a **7-day** [`minimumReleaseAge`](https://pnpm.io/settings#minimumreleaseage) (10080 minutes, stricter than pnpm’s default 1 day), [`blockExoticSubdeps`](https://pnpm.io/settings#blockexoticsubdeps) enabled, and an [`allowBuilds`](https://pnpm.io/settings#allowbuilds) map for dependencies that must run install scripts (pnpm 11 requires this for native toolchain packages such as esbuild). See the [pnpm 11 release notes](https://pnpm.io/blog/releases/11.0).
-
-CI: pull requests and `main` run `pnpm lint:security` then generate/scan an SPDX SBOM (`.github/workflows/sbom.yml`). Publish re-checks `pnpm lint:security` before npm publish.
-
-### Build
-
-```bash
 pnpm build
+pnpm --filter @mastra-evolution/example-local-self-improvement start
 ```
 
-### Test
+That example is a Hono HTTP server (learning plus L4 bounded skill promotion, plus `@mastra/hono`). Without a model API key it still listens and logs a warning; generate calls need `GEMINI_API_KEY` or `GOOGLE_GENERATIVE_AI_API_KEY`. Default `pnpm test` does not call a paid API. For Cloud Run + PostgreSQL + artifact bucket, see [`examples/cloud-run-a2a`](examples/cloud-run-a2a).
 
-```bash
-pnpm test
-```
+## Documentation
 
-### Linting & Formatting
+- [`examples/local-self-improvement`](examples/local-self-improvement) — learning plus skill promotion
+- [`examples/cloud-run-a2a`](examples/cloud-run-a2a) — multi-instance Cloud Run + PostgreSQL
 
-```bash
-pnpm lint
-pnpm format
-```
-
-## Project Structure
-
-- `packages/`: Monorepo packages
-  - `common/`: Shared utilities and types
+Working on this repository? See [`CONTRIBUTING.md`](CONTRIBUTING.md).
 
 ## License
 
-{LICENSE}
+Apache-2.0. See [LICENSE](LICENSE).
