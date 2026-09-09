@@ -155,3 +155,6 @@ codeql-results.sarif
 # Local Evolution hobby store (examples)
 .evolution/
 .workspace/
+
+# Local reviewed skill-update demo
+.skill-loop-demo/

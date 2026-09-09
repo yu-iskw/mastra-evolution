@@ -8,11 +8,10 @@ import type {
 } from '@mastra-evolution/core';
 
 /**
- * External hobby evaluator for L4 skill auto-promote when Mastra experiments
- * are not wired. Passes practical Agent Skills artifacts; fails slogans and
- * empty bodies.
+ * Validate practical Agent Skills structure. A pass is not evidence of improved
+ * agent behavior and must not authorize automatic publication.
  */
-export function createBoundedSkillEvaluator(): ImprovementEvaluator {
+export function createSkillValidator(): ImprovementEvaluator {
   return {
     evaluate(proposal: ImprovementProposal): Promise<ImprovementEvaluation> {
       if (proposal.target.type !== 'skill') {
@@ -29,8 +28,7 @@ export function createBoundedSkillEvaluator(): ImprovementEvaluator {
       return Promise.resolve({
         verdict: 'pass',
         regressions: [],
-        baselineScore: 0,
-        candidateScore: 1,
+        kind: 'structural',
       });
     },
   };
@@ -40,8 +38,7 @@ function failed(regressions: string[]): ImprovementEvaluation {
   return {
     verdict: 'fail',
     regressions,
-    baselineScore: 0,
-    candidateScore: 0,
+    kind: 'structural',
   };
 }
 
@@ -61,4 +58,9 @@ function fieldsFromArtifact(artifact: unknown): {
     description: stringField(artifact, 'description') ?? '',
     markdown: stringField(artifact, 'markdown') ?? stringField(artifact, 'instructions') ?? '',
   };
+}
+
+/** @deprecated Use createSkillValidator; this checks structure, not agent behavior. */
+export function createBoundedSkillEvaluator(): ImprovementEvaluator {
+  return createSkillValidator();
 }

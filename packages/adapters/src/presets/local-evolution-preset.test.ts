@@ -59,7 +59,11 @@ describe('localEvolutionPreset', () => {
 
   it('auto-promotes an accepted procedure lesson to SKILL.md through preset.learning', async () => {
     const directory = await uniqueTempDir();
-    const preset = localEvolutionPreset({ directory, agentId: AGENT_ID });
+    const preset = localEvolutionPreset({
+      directory,
+      agentId: AGENT_ID,
+      evaluator: new ScriptedEvaluator([{ verdict: 'pass', kind: 'behavioral', regressions: [] }]),
+    });
     const signal = {
       kind: 'procedure',
       summary: 'Use booked revenue excluding cancellations.',

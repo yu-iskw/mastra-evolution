@@ -109,6 +109,9 @@ function fakeImprovement(
         return { ...proposal, status: 'published' };
       });
     },
+    reject() {
+      return Promise.reject(new Error('unused'));
+    },
     rollback() {
       return Promise.reject(new Error('unused'));
     },

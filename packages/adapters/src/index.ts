@@ -3,7 +3,10 @@ export {
   EVOLUTION_EXTRACTOR_INSTRUCTIONS,
   EVOLUTION_EXTRACTOR_NAME,
 } from './learning/create-evolution-extractor';
-export { createBoundedSkillEvaluator } from './evaluate/create-bounded-skill-evaluator';
+export {
+  createBoundedSkillEvaluator,
+  createSkillValidator,
+} from './evaluate/create-bounded-skill-evaluator';
 export { createMastraEvaluator } from './evaluate/create-mastra-evaluator';
 export { createMastraEvolution } from './create-mastra-evolution';
 export { FilesystemSkillPublisher } from './skills/filesystem-skill-publisher';

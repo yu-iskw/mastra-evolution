@@ -9,6 +9,8 @@ export type ImprovementTarget =
 export type EvaluationVerdict = 'pass' | 'fail' | 'inconclusive';
 
 export interface ImprovementEvaluation {
+  /** Structural checks do not establish behavioral improvement. */
+  kind?: 'structural' | 'behavioral';
   baselineScore?: number;
   candidateScore?: number;
   regressions: string[];

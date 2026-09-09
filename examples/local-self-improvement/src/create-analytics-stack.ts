@@ -9,7 +9,6 @@ import { LocalFilesystem, Workspace } from '@mastra/core/workspace';
 import { LibSQLStore } from '@mastra/libsql';
 import { Memory } from '@mastra/memory';
 import { createMastraEvolution, resolveEvolutionWorkspaceLayout } from '@mastra-evolution/adapters';
-import { slugSkillName } from '@mastra-evolution/core';
 import { z } from 'zod';
 
 import { applyGeminiApiKey, readEnv } from './env';
@@ -18,12 +17,6 @@ import type { EvolutionWorkspaceLayout, MastraEvolution } from '@mastra-evolutio
 
 const MODEL = 'google/gemini-flash-lite-latest';
 export const AGENT_ID = 'analytics-agent';
-export const BOOKED_REVENUE_LESSON = 'Use booked revenue excluding cancellations.';
-export const SKILL_DIR_NAME = slugSkillName(BOOKED_REVENUE_LESSON);
-/** Stable demo thread for schema working memory across generate turns. */
-export const DEMO_THREAD_ID = 'local-self-improvement-demo';
-export const DEMO_RESOURCE_ID = 'analytics-demo-user';
-
 /**
  * App-owned domain Σ for analytics procedures. Reused across skills; not
  * inferred per lesson (see ADR-0004). Schema WM uses merge + null-delete.
@@ -57,8 +50,7 @@ export interface EvolutionSnapshot {
 }
 
 /**
- * Existing Mastra Agent + Workspace, then Evolution learning and L4 skill
- * improvement. Resets sibling `.evolution/` (Evolution store + learned skills) and
+ * Existing Mastra Agent + Workspace with learning and reviewed skill updates. Resets sibling `.evolution/` (Evolution store + learned skills) and
  * sibling `.mastra/` (app-owned Mastra Memory / LibSQL) so each process starts clean.
  * Curated `workspace/skills/` is left for git-managed skills.
  * Register the agent on a `Mastra` instance in code — server adapters do not discover files.
@@ -122,7 +114,7 @@ export async function createAnalyticsStack(): Promise<AnalyticsStack> {
     agent,
     workspace,
     learning: true,
-    improvement: { autonomy: 'auto-promote-bounded' },
+    improvement: true,
   });
   const mastra = new Mastra({
     agents: { [AGENT_ID]: agent },
@@ -159,15 +151,6 @@ export async function evolutionSnapshot(stack: AnalyticsStack): Promise<Evolutio
     skillFiles,
     promoteEvents: promoted.length,
   };
-}
-
-export async function skillMarkdownExists(learnedSkillsDir: string): Promise<boolean> {
-  try {
-    await access(path.join(learnedSkillsDir, SKILL_DIR_NAME, 'SKILL.md'));
-    return true;
-  } catch {
-    return false;
-  }
 }
 
 async function listSkillMarkdown(skillsDir: string): Promise<string[]> {

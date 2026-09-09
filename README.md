@@ -1,75 +1,101 @@
-# Mastra Evolution
+# Skill Loop for Mastra
 
-Self-learning and self-improvement **control plane** for [Mastra](https://mastra.ai/) agents. Apache-2.0.
+Improve agent skills through changes you can inspect, check, and undo. Apache-2.0.
 
-Attach Evolution to an **existing** Mastra `Agent` without subclassing. Mastra runs the agent. Evolution ingests evidence, records scoped lessons, and (when enabled) proposes, evaluates, and promotes skill revisions.
+**Skill Loop** turns explicit corrections and observations into proposed `SKILL.md`
+updates. Review a candidate, validate its structure, accept or reject it, and restore
+the previous content if needed. Mastra continues to own agent execution, workspace
+access, and memory.
 
-Learning and improvement are independently enableable: you can persist lessons with no skill publication.
+Previously **Mastra Evolution**. Package names and existing factory imports remain
+`@mastra-evolution/*` during this transition; no repository or npm namespace migration
+is required. See the [migration notes](docs/skill-loop-migration.md) for behavior changes.
 
-## Packages
+## Try one complete loop
 
-| Package                      | Role                                                                                                        |
-| ---------------------------- | ----------------------------------------------------------------------------------------------------------- |
-| `@mastra-evolution/core`     | Domain types. Subpaths: `./learning`, `./improvement`, `./storage-local`, `./storage-postgres`, `./testing` |
-| `@mastra-evolution/adapters` | Mastra adapter (`createMastraEvolution`) and presets (`@mastra-evolution/adapters/presets`)                 |
-
-Public attach API — existing Agent, then one factory call. Workspace appears once, on the Agent:
-
-```ts
-const layout = resolveEvolutionWorkspaceLayout(directory);
-
-const workspace = new Workspace({
-  id: 'analytics-workspace',
-  filesystem: new LocalFilesystem({
-    basePath: layout.basePath,
-    allowedPaths: [...layout.allowedPaths],
-  }),
-  // curated (git) first, learned (`.evolution/skills`) second
-  skills: [...layout.skills],
-});
-
-const agent = new Agent({
-  id: 'analytics-agent',
-  model: 'openai/gpt-5.6-sol',
-  workspace,
-  memory, // whatever the app already uses
-});
-
-const evolution = createMastraEvolution({
-  agent,
-  workspace,
-  learning: true,
-  improvement: { autonomy: 'auto-promote-bounded' },
-});
-
-await agent.generate('What is booked revenue?');
-```
-
-The factory binds the Workspace you pass (Mastra Agent keeps workspace private). It merges `afterToolCall` into workspace `tools.hooks` when `setToolsConfig` exists, and infers a local store beside the workspace filesystem. There is no `forAgent()` spread and no `SelfImprovingAgent`. Evolution never constructs or sets `agent.memory` ([ADR-0005](docs/adr/0005-evolution-layer-ownership-on-existing-mastra-agents.md)).
-
-Promoted skills write under sibling `.evolution/skills`, not git-managed `workspace/skills/`. Learning can run without improvement (`learning: true` only) when you want lessons without skill publication. For visibility into agent runs, use [Mastra observability](https://mastra.ai/docs/observability/overview). Advanced factories live on `@mastra-evolution/core/learning` and `@mastra-evolution/core/improvement`. `applyToCall` is an escape hatch for assigned/non-workspace tools. `register(agent)` is identity-only.
-
-**Supported Mastra:** `@mastra/core` `>=1.63.0 <2` (verified `1.63.2`).
-
-## Quickstart (local self-improvement)
-
-No PostgreSQL, queue, or live model is required to compile or to skip-run the example.
+No model API key, database server, or HTTP server is needed:
 
 ```bash
 pnpm install
 pnpm build
-pnpm --filter @mastra-evolution/example-local-self-improvement start
+pnpm --filter @mastra-evolution/example-local-self-improvement demo propose
 ```
 
-That example is a Hono HTTP server (learning plus L4 bounded skill promotion, plus `@mastra/hono`). Without a model API key it still listens and logs a warning; generate calls need `GEMINI_API_KEY` or `GOOGLE_GENERATIVE_AI_API_KEY`. Default `pnpm test` does not call a paid API. For Cloud Run + PostgreSQL + artifact bucket, see [`examples/cloud-run-a2a`](examples/cloud-run-a2a).
+The demo records a developer-supplied revenue correction, prints the before/after
+content, and saves a draft **outside** the active skills directory. It prints a
+proposal ID for the next command:
 
-## Documentation
+```bash
+pnpm --filter @mastra-evolution/example-local-self-improvement demo accept <proposal-id>
+pnpm --filter @mastra-evolution/example-local-self-improvement demo revert <proposal-id>
+# Or reject a proposal before accepting it:
+pnpm --filter @mastra-evolution/example-local-self-improvement demo reject <proposal-id>
+```
 
-- [`examples/local-self-improvement`](examples/local-self-improvement) — learning plus skill promotion
-- [`examples/cloud-run-a2a`](examples/cloud-run-a2a) — multi-instance Cloud Run + PostgreSQL
+The demo keeps its state between runs. `accept` is an explicit human decision;
+structural validation alone does not establish better agent behavior. To measure
+improvement, supply an evaluator that compares candidate and baseline behavior on
+representative cases. [Example details](examples/local-self-improvement).
 
-Working on this repository? See [`CONTRIBUTING.md`](CONTRIBUTING.md).
+## Small, explicit operations
 
-## License
+The existing improvement runtime is the review API:
 
-Apache-2.0. See [LICENSE](LICENSE).
+| User action | API                         | Result                                                                 |
+| ----------- | --------------------------- | ---------------------------------------------------------------------- |
+| Propose     | `proposeFromLesson(lesson)` | A stored candidate, no active file changes                             |
+| Check       | `evaluate(id)`              | Validation/evaluation result; inconclusive changes stay pending        |
+| Accept      | `promote(id)`               | Applies policy and reviewer approval, then publishes                   |
+| Reject      | `reject(id)`                | Ends a pending change without publication                              |
+| Revert      | `rollback(id)`              | Restores the prior active content, or removes a newly introduced skill |
+
+`createImprovement` defaults to reviewed promotion. Supply an `ApprovalProvider`
+that represents a real reviewer decision. The demo supplies approval only when its
+explicit `accept` command is run. A failed check cannot publish under the built-in
+policies. Repeated acceptance of a published proposal does not create another revision.
+
+## Connect an existing Mastra agent
+
+Use `createMastraEvolution({ agent, workspace, learning: true })` to collect lessons.
+The app owns the Agent, Workspace, and optional Memory. The adapter captures workspace
+tool failures; explicit corrections come through `extractor().onExtracted(...)`.
+Successful tool calls are not automatically treated as lessons.
+
+Learning can operate without skill publication. `improvement: true` now selects
+reviewed mode; automatic publication requires an explicit policy and a meaningful
+external evaluator. See the [adapter guide](packages/adapters/README.md).
+
+**Supported Mastra:** `@mastra/core >=1.63.0 <2` (pinned integration version: `1.63.2`).
+
+## Scope and limits
+
+- One artifact type: agent skills. No automatic code, workflow, or tool-policy rewriting.
+- Local, single-writer publication first. One publisher instance serializes its own
+  operations; applications must serialize the review workflow and avoid multiple
+  processes writing the same directory.
+- Drafts and active skills are separate. Publication saves a pending revision before
+  atomically replacing the active file. After interruption, retry the same proposal.
+  Individual files are atomic; the store and publisher are not one transaction.
+- Only the current revision of a skill can be reverted. External edits are preserved
+  when rollback detects a mismatch.
+- Mastra owns remote filesystem providers. This release's publisher is local;
+  PostgreSQL state storage does not make skill publication remote or distributed.
+
+[Product contract and design](docs/adr/0006-reviewed-skill-loop.md).
+
+## Packages and development
+
+| Package                      | Responsibility                                                             |
+| ---------------------------- | -------------------------------------------------------------------------- |
+| `@mastra-evolution/core`     | Lessons, proposals, review policies, local/PostgreSQL stores, test helpers |
+| `@mastra-evolution/adapters` | Mastra integration, structural skill validator, local publisher            |
+
+```bash
+pnpm build
+pnpm test
+pnpm lint
+```
+
+Default tests make no paid model calls. The [local example](examples/local-self-improvement)
+also contains an optional HTTP integration. [Cloud Run](examples/cloud-run-a2a) is an
+advanced deployment example. See [CONTRIBUTING.md](CONTRIBUTING.md).

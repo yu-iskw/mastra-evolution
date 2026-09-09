@@ -2,7 +2,7 @@
   "name": "mastra-evolution",
   "version": "0.1.0",
   "private": true,
-  "description": "Self-learning and self-improvement control plane for Mastra agents",
+  "description": "Skill Loop for Mastra: reviewable, validated, reversible agent skill updates",
   "keywords": [],
   "license": "Apache-2.0",
   "author": "",

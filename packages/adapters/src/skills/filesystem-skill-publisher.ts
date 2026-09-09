@@ -1,9 +1,10 @@
 /* eslint-disable security/detect-non-literal-fs-filename -- paths are constrained to the publisher directory */
-import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { randomUUID } from 'node:crypto';
+import { mkdir, readFile, rename, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
 import { isNodeErrorCode, isPlainObject as isRecord, stringField } from '@mastra-evolution/core';
-import { renderSkillMarkdown as renderSkillDocument } from '@mastra-evolution/core/learning';
+import { renderSkillMarkdown } from '@mastra-evolution/core/learning';
 
 import type {
   ApprovedImprovementProposal,
@@ -13,165 +14,226 @@ import type {
 } from '@mastra-evolution/core';
 
 const VERSIONS_FILE = '.evolution-versions.json';
-const DRAFTS_FILE = '.evolution-drafts.json';
-const VERSIONS_DIR = '.versions';
-const SKILL_MARKDOWN = 'SKILL.md';
 
 interface VersionRecord {
   id: string;
   proposalId: string;
+  skillName: string;
   previousRevision?: string;
-  at: string;
+  previousMarkdown: string | null;
+  markdown: string;
+  rolledBack?: boolean;
 }
 
 interface VersionManifest {
-  current?: string;
+  format: 2;
   revisions: VersionRecord[];
-}
-
-interface DraftRecord {
-  path: string;
-  proposalId: string;
+  pending?: VersionRecord;
 }
 
 /**
- * Hobby publisher: `writeDraft` writes Agent Skills `SKILL.md` on disk.
- * `publish` / `publishVersion` record a stored revision (and a blob under `.versions/`)
- * without implying a `SKILL.md` write — those are distinct operations.
+ * Local, single-writer skill publication. Drafts live outside the skill discovery root.
+ * A pending revision is saved before replacing SKILL.md so the same proposal can be
+ * retried after interruption, including with a new publisher instance.
+ * Atomic rename protects individual files; this is not a multi-file transaction.
  */
 export class FilesystemSkillPublisher implements EvolutionPublisher {
   private readonly directory: string;
+  private queue: Promise<void> = Promise.resolve();
 
   constructor(options: { directory: string }) {
     this.directory = path.resolve(options.directory);
   }
 
   async writeDraft(proposal: ImprovementProposal): Promise<{ path: string }> {
-    const skillName = safeSegment(skillNameFrom(proposal));
-    const skillDir = resolveUnderRoot(this.directory, skillName);
-    await mkdir(skillDir, { recursive: true });
-    const skillPath = path.join(skillDir, SKILL_MARKDOWN);
-    await writeFile(skillPath, markdownFromArtifact(proposal.candidateArtifact), 'utf8');
-    await appendDraft(this.directory, { path: skillPath, proposalId: proposal.id });
-    return { path: skillPath };
-  }
-
-  async publish(proposal: ApprovedImprovementProposal): Promise<PublishedRevision> {
-    const manifest = await readManifest(this.directory);
-    const previousRevision = manifest.current;
-    const revision = `rev-${manifest.revisions.length + 1}`;
-    manifest.revisions.push({
-      id: revision,
-      proposalId: proposal.id,
-      previousRevision,
-      at: new Date().toISOString(),
-    });
-    manifest.current = revision;
-    await mkdir(this.directory, { recursive: true });
-    await writeFile(
-      path.join(this.directory, VERSIONS_FILE),
-      `${JSON.stringify(manifest, null, 2)}\n`,
-      'utf8',
+    const draftPath = path.join(
+      this.directory,
+      '..',
+      'drafts',
+      safeSegment(proposal.id),
+      `${safeSegment(skillNameFrom(proposal))}.md`,
     );
-    await writeVersionBlob(this.directory, revision, proposal.candidateArtifact);
-    return { revision, previousRevision };
+    await writeAtomic(draftPath, markdownFromArtifact(proposal.candidateArtifact));
+    return { path: draftPath };
   }
 
-  /** Alias of {@link publish}. Does not write `SKILL.md`. */
-  async publishVersion(proposal: ApprovedImprovementProposal): Promise<PublishedRevision> {
+  publish(proposal: ApprovedImprovementProposal): Promise<PublishedRevision> {
+    return this.exclusive(() => this.publishUnlocked(proposal));
+  }
+
+  /** @deprecated Use publish; publication now also activates SKILL.md. */
+  publishVersion(proposal: ApprovedImprovementProposal): Promise<PublishedRevision> {
     return this.publish(proposal);
   }
 
-  async rollback(proposal: ImprovementProposal): Promise<PublishedRevision> {
+  rollback(proposal: ImprovementProposal): Promise<PublishedRevision> {
+    return this.exclusive(async () => {
+      const manifest = await readManifest(this.directory);
+      if (manifest.pending) {
+        throw new Error(`Retry pending proposal ${manifest.pending.proposalId} before rollback`);
+      }
+      const record = manifest.revisions.find((item) => item.proposalId === proposal.id);
+      if (!record) {
+        throw new Error('No restorable revision for this proposal');
+      }
+      if (record.rolledBack) {
+        return { revision: record.previousRevision ?? 'rev-0', previousRevision: record.id };
+      }
+      if (currentRevision(manifest, record.skillName)?.id !== record.id) {
+        throw new Error('Only the current revision of a skill can be reverted');
+      }
+      const skillPath = this.skillPath(record.skillName);
+      const active = await readOptional(skillPath);
+      if (active !== record.markdown && active !== record.previousMarkdown) {
+        throw new Error('Skill changed outside the publisher; review it before reverting');
+      }
+      if (record.previousMarkdown === null) {
+        await rm(skillPath, { force: true });
+      } else {
+        await writeAtomic(skillPath, record.previousMarkdown);
+      }
+      record.rolledBack = true;
+      await writeManifest(this.directory, manifest);
+      return { revision: record.previousRevision ?? 'rev-0', previousRevision: record.id };
+    });
+  }
+
+  private async publishUnlocked(proposal: ApprovedImprovementProposal): Promise<PublishedRevision> {
     const manifest = await readManifest(this.directory);
-    const previousRevision = manifest.current;
-    const revision = proposal.baselineRevision ?? previousRevision ?? 'rev-0';
-    manifest.current = revision;
-    await mkdir(this.directory, { recursive: true });
-    await writeFile(
-      path.join(this.directory, VERSIONS_FILE),
-      `${JSON.stringify(manifest, null, 2)}\n`,
-      'utf8',
+    const skillName = safeSegment(skillNameFrom(proposal));
+    const markdown = markdownFromArtifact(proposal.candidateArtifact);
+    const existing = manifest.revisions.find((item) => item.proposalId === proposal.id);
+    if (existing) {
+      assertSameCandidate(existing, skillName, markdown);
+      if (existing.rolledBack) {
+        throw new Error('This proposal was reverted; create a new proposal');
+      }
+      return { revision: existing.id, previousRevision: existing.previousRevision };
+    }
+    let record = manifest.pending;
+    if (record) {
+      if (record.proposalId !== proposal.id) {
+        throw new Error(`Retry pending proposal ${record.proposalId} before publishing another`);
+      }
+      assertSameCandidate(record, skillName, markdown);
+    } else {
+      record = {
+        id: `rev-${manifest.revisions.length + 1}`,
+        proposalId: proposal.id,
+        skillName,
+        previousRevision: currentRevision(manifest, skillName)?.id,
+        previousMarkdown: await readOptional(this.skillPath(skillName)),
+        markdown,
+      };
+      manifest.pending = record;
+      await writeManifest(this.directory, manifest);
+    }
+    const active = await readOptional(this.skillPath(skillName));
+    if (active !== record.previousMarkdown && active !== record.markdown) {
+      throw new Error('Skill changed during publication; review it before retrying');
+    }
+    await writeAtomic(this.skillPath(skillName), record.markdown);
+    manifest.revisions.push(record);
+    delete manifest.pending;
+    await writeManifest(this.directory, manifest);
+    return { revision: record.id, previousRevision: record.previousRevision };
+  }
+
+  private skillPath(name: string): string {
+    return path.join(this.directory, safeSegment(name), 'SKILL.md');
+  }
+
+  private exclusive<T>(work: () => Promise<T>): Promise<T> {
+    const run = this.queue.then(work, work);
+    this.queue = run.then(
+      () => undefined,
+      () => undefined,
     );
-    return { revision, previousRevision };
+    return run;
+  }
+}
+
+function currentRevision(manifest: VersionManifest, skillName: string): VersionRecord | undefined {
+  return [...manifest.revisions]
+    .reverse()
+    .find((item) => item.skillName === skillName && !item.rolledBack);
+}
+
+function assertSameCandidate(record: VersionRecord, skillName: string, markdown: string): void {
+  if (record.skillName !== skillName || record.markdown !== markdown) {
+    throw new Error('Proposal content changed; create a new proposal');
   }
 }
 
 async function readManifest(directory: string): Promise<VersionManifest> {
+  const raw = await readOptional(path.join(directory, VERSIONS_FILE));
+  if (raw === null) {
+    return { format: 2, revisions: [] };
+  }
+  const parsed: unknown = JSON.parse(raw);
+  if (
+    !isRecord(parsed) ||
+    parsed.format !== 2 ||
+    !Array.isArray(parsed.revisions) ||
+    !parsed.revisions.every(isVersionRecord) ||
+    (parsed.pending !== undefined && !isVersionRecord(parsed.pending))
+  ) {
+    throw new Error(
+      'Unsupported skill history. Back up the existing directory and use a new publication directory; legacy history cannot restore skill content.',
+    );
+  }
+  return parsed as unknown as VersionManifest;
+}
+
+function isVersionRecord(value: unknown): value is VersionRecord {
+  return (
+    isRecord(value) &&
+    typeof value.id === 'string' &&
+    typeof value.proposalId === 'string' &&
+    typeof value.skillName === 'string' &&
+    typeof value.markdown === 'string' &&
+    (value.previousMarkdown === null || typeof value.previousMarkdown === 'string') &&
+    (value.previousRevision === undefined || typeof value.previousRevision === 'string') &&
+    (value.rolledBack === undefined || typeof value.rolledBack === 'boolean')
+  );
+}
+
+async function writeManifest(directory: string, manifest: VersionManifest): Promise<void> {
+  await writeAtomic(path.join(directory, VERSIONS_FILE), `${JSON.stringify(manifest, null, 2)}\n`);
+}
+
+async function readOptional(filePath: string): Promise<string | null> {
   try {
-    const raw = await readFile(path.join(directory, VERSIONS_FILE), 'utf8');
-    const parsed: unknown = JSON.parse(raw);
-    if (!isRecord(parsed) || !Array.isArray(parsed.revisions)) {
-      return { revisions: [] };
-    }
-    return {
-      current: typeof parsed.current === 'string' ? parsed.current : undefined,
-      revisions: parsed.revisions.filter(isVersionRecord),
-    };
+    return await readFile(filePath, 'utf8');
   } catch (error: unknown) {
     if (isNodeErrorCode(error, 'ENOENT')) {
-      return { revisions: [] };
+      return null;
     }
     throw error;
   }
 }
 
-function isVersionRecord(value: unknown): value is VersionRecord {
-  return isRecord(value) && typeof value.id === 'string' && typeof value.proposalId === 'string';
-}
-
-async function writeVersionBlob(
-  directory: string,
-  revision: string,
-  artifact: unknown,
-): Promise<void> {
-  const versionsDir = resolveUnderRoot(directory, VERSIONS_DIR);
-  await mkdir(versionsDir, { recursive: true });
-  const blobPath = resolveUnderRoot(directory, VERSIONS_DIR, `${safeSegment(revision)}.md`);
-  await writeFile(blobPath, markdownFromArtifact(artifact), 'utf8');
-}
-
-async function appendDraft(directory: string, draft: DraftRecord): Promise<void> {
-  const drafts = await readDrafts(directory);
-  drafts.push(draft);
-  await mkdir(directory, { recursive: true });
-  await writeFile(
-    path.join(directory, DRAFTS_FILE),
-    `${JSON.stringify(drafts, null, 2)}\n`,
-    'utf8',
-  );
-}
-
-async function readDrafts(directory: string): Promise<DraftRecord[]> {
+async function writeAtomic(filePath: string, text: string): Promise<void> {
+  await mkdir(path.dirname(filePath), { recursive: true });
+  const tempPath = `${filePath}.${randomUUID()}.tmp`;
   try {
-    const raw = await readFile(path.join(directory, DRAFTS_FILE), 'utf8');
-    const parsed: unknown = JSON.parse(raw);
-    if (!Array.isArray(parsed)) {
-      return [];
-    }
-    return parsed.filter((item): item is DraftRecord => {
-      return isRecord(item) && typeof item.path === 'string' && typeof item.proposalId === 'string';
-    });
-  } catch (error: unknown) {
-    if (isNodeErrorCode(error, 'ENOENT')) {
-      return [];
-    }
-    throw error;
+    await writeFile(tempPath, text, 'utf8');
+    await rename(tempPath, filePath);
+  } finally {
+    await rm(tempPath, { force: true });
   }
 }
 
 function skillNameFrom(proposal: ImprovementProposal): string {
-  const artifact = proposal.candidateArtifact;
-  if (isRecord(artifact)) {
-    const name = stringField(artifact, 'name');
-    if (name) {
-      return name;
-    }
+  if (proposal.target.type !== 'skill') {
+    throw new Error('Only skill artifacts can be published');
   }
-  if (proposal.target.type === 'skill' && proposal.target.skillId) {
+  if (proposal.target.skillId) {
     return proposal.target.skillId;
   }
-  return proposal.id;
+  return isRecord(proposal.candidateArtifact)
+    ? (stringField(proposal.candidateArtifact, 'name') ?? proposal.id)
+    : proposal.id;
 }
 
 function markdownFromArtifact(artifact: unknown): string {
@@ -179,9 +241,9 @@ function markdownFromArtifact(artifact: unknown): string {
     return artifact;
   }
   if (!isRecord(artifact)) {
-    return renderSkillDocument({ name: 'untitled-skill', description: '', instructions: '' });
+    throw new Error('Expected a skill document');
   }
-  return renderSkillDocument({
+  return renderSkillMarkdown({
     name: stringField(artifact, 'name') ?? 'untitled-skill',
     description: stringField(artifact, 'description') ?? '',
     instructions: stringField(artifact, 'markdown') ?? stringField(artifact, 'instructions') ?? '',
@@ -189,18 +251,8 @@ function markdownFromArtifact(artifact: unknown): string {
 }
 
 function safeSegment(value: string): string {
-  const cleaned = value
-    .replace(/[^A-Za-z0-9._-]+/g, '-')
-    .replace(/^\.+/g, '')
-    .replace(/\.+$/g, '');
-  return cleaned.length > 0 ? cleaned : 'skill';
-}
-
-function resolveUnderRoot(root: string, ...segments: string[]): string {
-  const resolved = path.resolve(root, ...segments);
-  const rootResolved = path.resolve(root);
-  if (resolved !== rootResolved && !resolved.startsWith(`${rootResolved}${path.sep}`)) {
-    throw new Error('Path escapes publisher directory');
+  if (!/^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(value)) {
+    throw new Error('Skill names and proposal IDs must be safe path segments');
   }
-  return resolved;
+  return value;
 }

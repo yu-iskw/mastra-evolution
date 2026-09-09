@@ -5,6 +5,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 
 import { CapabilityError } from '@mastra-evolution/core';
+import { ScriptedEvaluator } from '@mastra-evolution/core/testing';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
@@ -471,7 +472,12 @@ describe('createMastraEvolution', () => {
     const evolution = createMastraEvolution({
       agent: { id: 'analytics-agent', workspace },
       learning: true,
-      improvement: { autonomy: 'auto-promote-bounded' },
+      improvement: {
+        autonomy: 'auto-promote-bounded',
+        evaluator: new ScriptedEvaluator([
+          { verdict: 'pass', kind: 'behavioral', regressions: [] },
+        ]),
+      },
     });
     expect(typeof (evolution.learning as { draftSkill?: unknown } | undefined)?.draftSkill).toBe(
       'function',
@@ -505,14 +511,14 @@ describe('createMastraEvolution', () => {
     expect(events?.filter((event) => event.type === 'evolution.promote')).toHaveLength(1);
   });
 
-  it('does not auto-publish skills when improvement autonomy is validate', async () => {
+  it('does not auto-publish skills when improvement is enabled with default reviewed mode', async () => {
     const root = await uniqueTempDir();
     const workspaceDir = path.join(root, 'workspace');
     const workspace = duckWorkspace(workspaceDir);
     const evolution = createMastraEvolution({
       agent: { id: 'analytics-agent', workspace },
       learning: true,
-      improvement: { autonomy: 'validate' },
+      improvement: true,
     });
     const signal = {
       kind: 'procedure',

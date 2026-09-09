@@ -1,5 +1,6 @@
 import {
   CapabilityError,
+  ENTERPRISE_SKILL_AUTONOMY,
   HOBBY_SKILL_AUTONOMY,
   isPlainObject as isRecord,
   parseAutonomy,
@@ -219,8 +220,8 @@ function materializeImprovement(
     throw new CapabilityError(MISSING_WORKSPACE_ERROR);
   }
   const config: ImprovementConfig =
-    improvement === true ? { enabled: true, autonomy: HOBBY_SKILL_AUTONOMY } : improvement;
-  const autonomy = config.autonomy ?? HOBBY_SKILL_AUTONOMY;
+    improvement === true ? { enabled: true, autonomy: ENTERPRISE_SKILL_AUTONOMY } : improvement;
+  const autonomy = config.autonomy ?? ENTERPRISE_SKILL_AUTONOMY;
   const publisherDirectory = resolvePublisherDirectory(bind, store);
   if (
     publisherDirectory !== undefined &&

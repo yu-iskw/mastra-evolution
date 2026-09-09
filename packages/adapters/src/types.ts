@@ -110,6 +110,7 @@ export interface MastraEvolution {
    */
   applyToCall<T extends Record<string, unknown> = Record<string, unknown>>(callOptions?: T): T;
   /**
+   * @deprecated Use the original agent directly.
    * Compatibility stub: returns the same agent identity (`Object.is`). Does not
    * wrap, subclass, or mutate Memory. Prefer `createMastraEvolution({ agent, workspace })`,
    * which already plugs workspace hooks.

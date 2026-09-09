@@ -2,7 +2,7 @@
   "name": "@mastra-evolution/example-local-self-improvement",
   "version": "0.1.0",
   "private": true,
-  "description": "Hono HTTP server for Evolution learning plus L4 skill improvement on an existing agent.",
+  "description": "Local reviewed skill-update demo and optional Mastra HTTP integration",
   "license": "Apache-2.0",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

@@ -33,6 +33,64 @@ const FAIL_EVALUATION: ImprovementEvaluation = {
 };
 
 describe('createImprovement', () => {
+  it('keeps explicit rejection terminal without publication', async () => {
+    const { runtime, publisher } = setupRuntime({
+      autonomy: 4,
+      evaluator: new ScriptedEvaluator([PASS_EVALUATION]),
+    });
+    const proposal = await runtime.proposeFromLesson(sampleLesson());
+    expect((await runtime.reject(proposal.id)).status).toBe('rejected');
+    expect((await runtime.promote(proposal.id)).status).toBe('rejected');
+    expect(publisher.published).toHaveLength(0);
+  });
+
+  it('repeated acceptance does not publish twice or create another promotion event', async () => {
+    const { runtime, publisher, store } = setupRuntime({
+      autonomy: 4,
+      evaluator: new ScriptedEvaluator([PASS_EVALUATION]),
+    });
+    const proposal = await runtime.proposeFromLesson(sampleLesson());
+    const first = await runtime.promote(proposal.id);
+    expect(await runtime.promote(proposal.id)).toEqual(first);
+    expect(publisher.published).toHaveLength(1);
+    expect(
+      (await store.findEvents(AGENT_ID)).filter((event) => event.type === 'evolution.promote'),
+    ).toHaveLength(1);
+    await expect(runtime.evaluate(proposal.id)).rejects.toThrow('completed change');
+  });
+
+  it('keeps inconclusive changes pending for a later evaluation', async () => {
+    const { runtime, publisher } = setupRuntime({
+      autonomy: 4,
+      evaluator: new ScriptedEvaluator([
+        { verdict: 'inconclusive', regressions: [] },
+        PASS_EVALUATION,
+      ]),
+    });
+    const proposal = await runtime.proposeFromLesson(sampleLesson());
+    expect((await runtime.promote(proposal.id)).status).toBe('evaluating');
+    expect(publisher.published).toHaveLength(0);
+    await runtime.evaluate(proposal.id);
+    expect((await runtime.promote(proposal.id)).status).toBe('published');
+  });
+
+  it('requires review when structural validation is the only passing check', async () => {
+    const { runtime, publisher } = setupRuntime({
+      autonomy: 4,
+      evaluator: new ScriptedEvaluator([{ verdict: 'pass', kind: 'structural', regressions: [] }]),
+    });
+    const proposal = await runtime.proposeFromLesson(sampleLesson());
+    expect((await runtime.promote(proposal.id)).status).toBe('awaiting-approval');
+    expect(publisher.published).toHaveLength(0);
+  });
+
+  it('does not revert an unpublished proposal', async () => {
+    const { runtime, publisher } = setupRuntime();
+    const proposal = await runtime.proposeFromLesson(sampleLesson());
+    await expect(runtime.rollback(proposal.id)).rejects.toThrow('Only published');
+    expect(publisher.rolledBack).toHaveLength(0);
+  });
+
   it('AE5: rejects promotion when the evaluator fails and does not publish', async () => {
     const { runtime, publisher, store } = setupRuntime({
       autonomy: 'auto-promote-bounded',
@@ -67,7 +125,7 @@ describe('createImprovement', () => {
     const promoted = await runtime.promote(proposed.id);
     expect(promoted.status).toBe('published');
     expect(promoted.candidateRevision).toBe('rev-1');
-    expect(publisher.drafts).toHaveLength(1);
+    expect(publisher.drafts).toHaveLength(0);
     expect(publisher.published).toHaveLength(1);
     expect(publisher.published[0]?.status).toBe('approved');
 

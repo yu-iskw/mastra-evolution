@@ -38,6 +38,9 @@ describe('createBoundedSkillEvaluator', () => {
       {},
     );
     expect(evaluation.verdict).toBe('pass');
+    expect(evaluation.kind).toBe('structural');
+    expect(evaluation.baselineScore).toBeUndefined();
+    expect(evaluation.candidateScore).toBeUndefined();
     expect(evaluation.regressions).toEqual([]);
   });
 
