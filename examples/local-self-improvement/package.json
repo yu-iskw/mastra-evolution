@@ -19,7 +19,7 @@
     "@mastra/hono": "1.7.5",
     "@mastra/libsql": "1.21.1",
     "@mastra/memory": "1.27.0",
-    "hono": "4.13.0",
+    "hono": "4.13.5",
     "zod": "4.5.4"
   }
 }

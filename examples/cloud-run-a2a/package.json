@@ -16,6 +16,6 @@
     "@mastra-evolution/core": "workspace:*",
     "@mastra/core": "1.63.2",
     "@mastra/hono": "1.7.5",
-    "hono": "4.13.4"
+    "hono": "4.13.5"
   }
 }
