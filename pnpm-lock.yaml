@@ -70,7 +70,7 @@ importers:
     dependencies:
       '@hono/node-server':
         specifier: 2.1.1
-        version: 2.1.1(hono@4.13.4)
+        version: 2.1.1(hono@4.13.5)
       '@mastra-evolution/adapters':
         specifier: workspace:*
         version: link:../../packages/adapters
@@ -82,16 +82,16 @@ importers:
         version: 1.63.2(zod@4.5.4)
       '@mastra/hono':
         specifier: 1.7.5
-        version: 1.7.5(@hono/node-server@2.1.1(hono@4.13.4))(@mastra/core@1.63.2(zod@4.5.4))(hono@4.13.4)(zod@4.5.4)
+        version: 1.7.5(@hono/node-server@2.1.1(hono@4.13.5))(@mastra/core@1.63.2(zod@4.5.4))(hono@4.13.5)(zod@4.5.4)
       hono:
-        specifier: 4.13.4
-        version: 4.13.4
+        specifier: 4.13.5
+        version: 4.13.5
 
   examples/local-self-improvement:
     dependencies:
       '@hono/node-server':
         specifier: 2.1.1
-        version: 2.1.1(hono@4.13.0)
+        version: 2.1.1(hono@4.13.5)
       '@mastra-evolution/adapters':
         specifier: workspace:*
         version: link:../../packages/adapters
@@ -103,7 +103,7 @@ importers:
         version: 1.63.2(zod@4.5.4)
       '@mastra/hono':
         specifier: 1.7.5
-        version: 1.7.5(@hono/node-server@2.1.1(hono@4.13.0))(@mastra/core@1.63.2(zod@4.5.4))(hono@4.13.0)(zod@4.5.4)
+        version: 1.7.5(@hono/node-server@2.1.1(hono@4.13.5))(@mastra/core@1.63.2(zod@4.5.4))(hono@4.13.5)(zod@4.5.4)
       '@mastra/libsql':
         specifier: 1.21.1
         version: 1.21.1(@mastra/core@1.63.2(zod@4.5.4))
@@ -111,8 +111,8 @@ importers:
         specifier: 1.27.0
         version: 1.27.0(@mastra/core@1.63.2(zod@4.5.4))
       hono:
-        specifier: 4.13.0
-        version: 4.13.0
+        specifier: 4.13.5
+        version: 4.13.5
       zod:
         specifier: 4.5.4
         version: 4.5.4
@@ -1485,12 +1485,8 @@ packages:
     resolution: {integrity: sha512-EykJT/Q1KjTWctppgIAgfSO0tKVuZUjhgMr17kqTumMl6Afv3EISleU7qZUzoXDFTAHTDC4NOoG/ZxU3EvlMPQ==}
     engines: {node: '>=8'}
 
-  hono@4.13.0:
-    resolution: {integrity: sha512-jhunvfHWxd7J5EFfSgH4xsYJzSe/lfqbUCxiyyeaQasUsXeEHXtzVid+7EOGByc5JnFa23SSFL3Y2RV/z1T+eQ==}
-    engines: {node: '>=16.9.0'}
-
-  hono@4.13.4:
-    resolution: {integrity: sha512-AGEwKIyRMHRv1t8Wjwa3LHxQ61X5CqrdFT+4BRNTpqS5aJNnpl5WLjADb7vFlJzI/8uK7T5QLVApCMQKNa3LgQ==}
+  hono@4.13.5:
+    resolution: {integrity: sha512-O6+/eCYRkzzzy0rPWwKLiGBR1nFuUPZynnwjxN1MBA62NNqbT0wQEzQyK2gSO5yDIDB336sXQleAhOHrzlYyKw==}
     engines: {node: '>=16.9.0'}
 
   html-escaper@2.0.2:
@@ -1582,8 +1578,8 @@ packages:
     resolution: {integrity: sha512-AC/7JofJvZGrrneWNaEnJeOLUx+JlGt7tNa0wZiRPT4MY1wmfKjt2+6O2p2uz2+skll8OZZmJMNqeke7kKbNgQ==}
     hasBin: true
 
-  jose@6.2.10:
-    resolution: {integrity: sha512-iiW7J9qRFlGxvCOIBDBDxFePQSn7ZMAnrYGhrrOo6siO/MIqwfyilLR27pkfDgUk+raLuzADS8A3S/KLBisc0g==}
+  jose@6.2.12:
+    resolution: {integrity: sha512-9NiFmJEex0sy2Dk58j2UGBSHgUs2ypF9eZSu4L6vjOX3Dp96Sw1F3uL+H+D1sx02jZZdzUT0HgvCy59CuvXcWw==}
 
   jpeg-js@0.4.4:
     resolution: {integrity: sha512-WZzeDOEtTOBK4Mdsar0IqEU5sMr3vSV2RqkAIzUEV2BHnUfKGyswWFPFwK5EeDo93K3FohSHbLAjj0s1Wzd+dg==}
@@ -2434,7 +2430,7 @@ snapshots:
 
   '@a2a-js/sdk@1.0.1':
     dependencies:
-      jose: 6.2.10
+      jose: 6.2.12
       uuid: 11.1.1
 
   '@ai-sdk/provider-utils@3.0.30(zod@4.5.4)':
@@ -2553,27 +2549,14 @@ snapshots:
       '@eslint/core': 1.2.1
       levn: 0.4.1
 
-  '@hono/node-server@2.1.1(hono@4.13.0)':
+  '@hono/node-server@2.1.1(hono@4.13.5)':
     dependencies:
-      hono: 4.13.0
+      hono: 4.13.5
 
-  '@hono/node-server@2.1.1(hono@4.13.4)':
+  '@hono/node-ws@1.3.1(@hono/node-server@2.1.1(hono@4.13.5))(hono@4.13.5)':
     dependencies:
-      hono: 4.13.4
-
-  '@hono/node-ws@1.3.1(@hono/node-server@2.1.1(hono@4.13.0))(hono@4.13.0)':
-    dependencies:
-      '@hono/node-server': 2.1.1(hono@4.13.0)
-      hono: 4.13.0
-      ws: 8.21.3
-    transitivePeerDependencies:
-      - bufferutil
-      - utf-8-validate
-
-  '@hono/node-ws@1.3.1(@hono/node-server@2.1.1(hono@4.13.4))(hono@4.13.4)':
-    dependencies:
-      '@hono/node-server': 2.1.1(hono@4.13.4)
-      hono: 4.13.4
+      '@hono/node-server': 2.1.1(hono@4.13.5)
+      hono: 4.13.5
       ws: 8.21.3
     transitivePeerDependencies:
       - bufferutil
@@ -2715,27 +2698,13 @@ snapshots:
       - utf-8-validate
       - workflow
 
-  '@mastra/hono@1.7.5(@hono/node-server@2.1.1(hono@4.13.0))(@mastra/core@1.63.2(zod@4.5.4))(hono@4.13.0)(zod@4.5.4)':
+  '@mastra/hono@1.7.5(@hono/node-server@2.1.1(hono@4.13.5))(@mastra/core@1.63.2(zod@4.5.4))(hono@4.13.5)(zod@4.5.4)':
     dependencies:
-      '@hono/node-ws': 1.3.1(@hono/node-server@2.1.1(hono@4.13.0))(hono@4.13.0)
+      '@hono/node-ws': 1.3.1(@hono/node-server@2.1.1(hono@4.13.5))(hono@4.13.5)
       '@mastra/core': 1.63.2(zod@4.5.4)
       '@mastra/server': 1.63.2(@mastra/core@1.63.2(zod@4.5.4))(zod@4.5.4)
       fetch-to-node: 2.1.0
-      hono: 4.13.0
-      ws: 8.21.3
-    transitivePeerDependencies:
-      - '@hono/node-server'
-      - bufferutil
-      - utf-8-validate
-      - zod
-
-  '@mastra/hono@1.7.5(@hono/node-server@2.1.1(hono@4.13.4))(@mastra/core@1.63.2(zod@4.5.4))(hono@4.13.4)(zod@4.5.4)':
-    dependencies:
-      '@hono/node-ws': 1.3.1(@hono/node-server@2.1.1(hono@4.13.4))(hono@4.13.4)
-      '@mastra/core': 1.63.2(zod@4.5.4)
-      '@mastra/server': 1.63.2(@mastra/core@1.63.2(zod@4.5.4))(zod@4.5.4)
-      fetch-to-node: 2.1.0
-      hono: 4.13.4
+      hono: 4.13.5
       ws: 8.21.3
     transitivePeerDependencies:
       - '@hono/node-server'
@@ -2775,7 +2744,7 @@ snapshots:
   '@mastra/server@1.63.2(@mastra/core@1.63.2(zod@4.5.4))(zod@4.5.4)':
     dependencies:
       '@mastra/core': 1.63.2(zod@4.5.4)
-      hono: 4.13.4
+      hono: 4.13.5
       zod: 4.5.4
 
   '@modelcontextprotocol/core@2.0.0':
@@ -3697,9 +3666,7 @@ snapshots:
 
   has-flag@4.0.0: {}
 
-  hono@4.13.0: {}
-
-  hono@4.13.4: {}
+  hono@4.13.5: {}
 
   html-escaper@2.0.2: {}
 
@@ -3767,7 +3734,7 @@ snapshots:
 
   jiti@2.7.0: {}
 
-  jose@6.2.10: {}
+  jose@6.2.12: {}
 
   jpeg-js@0.4.4: {}
 
