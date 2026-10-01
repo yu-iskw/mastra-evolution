@@ -70,7 +70,7 @@ importers:
     dependencies:
       '@hono/node-server':
         specifier: 2.1.1
-        version: 2.1.1(hono@4.13.4)
+        version: 2.1.1(hono@4.13.9)
       '@mastra-evolution/adapters':
         specifier: workspace:*
         version: link:../../packages/adapters
@@ -82,16 +82,16 @@ importers:
         version: 1.63.2(zod@4.5.4)
       '@mastra/hono':
         specifier: 1.7.5
-        version: 1.7.5(@hono/node-server@2.1.1(hono@4.13.4))(@mastra/core@1.63.2(zod@4.5.4))(hono@4.13.4)(zod@4.5.4)
+        version: 1.7.5(@hono/node-server@2.1.1(hono@4.13.9))(@mastra/core@1.63.2(zod@4.5.4))(hono@4.13.9)(zod@4.5.4)
       hono:
-        specifier: 4.13.4
-        version: 4.13.4
+        specifier: 4.13.9
+        version: 4.13.9
 
   examples/local-self-improvement:
     dependencies:
       '@hono/node-server':
         specifier: 2.1.1
-        version: 2.1.1(hono@4.13.0)
+        version: 2.1.1(hono@4.13.9)
       '@mastra-evolution/adapters':
         specifier: workspace:*
         version: link:../../packages/adapters
@@ -103,7 +103,7 @@ importers:
         version: 1.63.2(zod@4.5.4)
       '@mastra/hono':
         specifier: 1.7.5
-        version: 1.7.5(@hono/node-server@2.1.1(hono@4.13.0))(@mastra/core@1.63.2(zod@4.5.4))(hono@4.13.0)(zod@4.5.4)
+        version: 1.7.5(@hono/node-server@2.1.1(hono@4.13.9))(@mastra/core@1.63.2(zod@4.5.4))(hono@4.13.9)(zod@4.5.4)
       '@mastra/libsql':
         specifier: 1.21.1
         version: 1.21.1(@mastra/core@1.63.2(zod@4.5.4))
@@ -111,8 +111,8 @@ importers:
         specifier: 1.27.0
         version: 1.27.0(@mastra/core@1.63.2(zod@4.5.4))
       hono:
-        specifier: 4.13.0
-        version: 4.13.0
+        specifier: 4.13.9
+        version: 4.13.9
       zod:
         specifier: 4.5.4
         version: 4.5.4
@@ -273,12 +273,16 @@ packages:
       '@hono/node-server': ^1.19.11
       hono: ^4.6.0
 
-  '@humanfs/core@0.19.1':
-    resolution: {integrity: sha512-5DyQ4+1JEUzejeK1JGICcideyfUbGixgS9jNgex5nqkW+cY7WZhxBigmieN5Qnw9ZosSNVC9KQKyb+GUaGyKUA==}
+  '@humanfs/core@0.19.2':
+    resolution: {integrity: sha512-UhXNm+CFMWcbChXywFwkmhqjs3PRCmcSa/hfBgLIb7oQ5HNb1wS0icWsGtSAUNgefHeI+eBrA8I1fxmbHsGdvA==}
     engines: {node: '>=18.18.0'}
 
-  '@humanfs/node@0.16.7':
-    resolution: {integrity: sha512-/zUx+yOsIrG4Y43Eh2peDeKCxlRt/gET6aHfaKpuq267qXdYDFViVHfMaLyygZOnl0kGWxFIgsBy8QFuTLUXEQ==}
+  '@humanfs/node@0.16.8':
+    resolution: {integrity: sha512-gE1eQNZ3R++kTzFUpdGlpmy8kDZD/MLyHqDwqjkVQI0JMdI1D51sy1H958PNXYkM2rAac7e5/CnIKZrHtPh3BQ==}
+    engines: {node: '>=18.18.0'}
+
+  '@humanfs/types@0.15.0':
+    resolution: {integrity: sha512-ZZ1w0aoQkwuUuC7Yf+7sdeaNfqQiiLcSRbfI08oAxqLtpXQr9AIVX7Ay7HLDuiLYAaFPu8oBYNq/QIi9URHJ3Q==}
     engines: {node: '>=18.18.0'}
 
   '@humanwhocodes/module-importer@1.0.1':
@@ -1087,11 +1091,6 @@ packages:
     resolution: {integrity: sha512-BLrgEcRTwX2o6gGxGOCNyMvGSp35YofuYzw9h1IMTRmKqttAZZVU67bdb9Pr2vUHA8+j3i2tJfjO6C6+4myGTA==}
     engines: {node: 18 || 20 || >=22}
 
-  baseline-browser-mapping@2.10.21:
-    resolution: {integrity: sha512-Q+rUQ7Uz8AHM7DEaNdwvfFCTq7a43lNTzuS94eiWqwyxfV/wJv+oUivef51T91mmRY4d4A1u9rcSvkeufCVXlA==}
-    engines: {node: '>=6.0.0'}
-    hasBin: true
-
   baseline-browser-mapping@2.11.20:
     resolution: {integrity: sha512-H0ulySigv6icDJ1F7SjtdCD6PrhTpdYCmP0CactWy1+ekh0AFd0o1Wn5T8b+hnTmdBx19u9yhL6wvCylXMY7zw==}
     engines: {node: '>=6.0.0'}
@@ -1100,11 +1099,6 @@ packages:
   brace-expansion@5.0.9:
     resolution: {integrity: sha512-ScQ4IuvIEF1TMlP7Zt+vjJ//9zlPb2SDcxWxM3bk8s6t6GGdJ7KO1dCcTidOPJKePW30LE/2cT7wCyPho9/Wxg==}
     engines: {node: 20 || >=22}
-
-  browserslist@4.28.2:
-    resolution: {integrity: sha512-48xSriZYYg+8qXna9kwqjIVzuQxi+KYWp2+5nCYnYKPTr0LvD89Jqk2Or5ogxz0NUMfIjhh2lIUX/LyX9B4oIg==}
-    engines: {node: ^6 || ^7 || ^8 || ^9 || ^10 || ^11 || ^12 || >=13.7}
-    hasBin: true
 
   browserslist@4.28.8:
     resolution: {integrity: sha512-V2NpofLblG64mfOtSgDhOJESZEGogzDMBv/q+W6oc4LXWP/q75eOXoOaaOu1EOadB9U4Bwx/e0yzbvwKH8zalA==}
@@ -1122,9 +1116,6 @@ packages:
   bytes@3.1.2:
     resolution: {integrity: sha512-/Nf7TyzTx6S3yRJObOAV7956r8cr2+Oj8AC5dt8wSP3BQAoeX58NoHyCU8P8zGkNXStjTSi6fzO6F0pBdcYbEg==}
     engines: {node: '>= 0.8'}
-
-  caniuse-lite@1.0.30001790:
-    resolution: {integrity: sha512-bOoxfJPyYo+ds6W0YfptaCWbFnJYjh2Y1Eow5lRv+vI2u8ganPZqNm1JwNh0t2ELQCqIWg4B3dWEusgAmsoyOw==}
 
   caniuse-lite@1.0.30001810:
     resolution: {integrity: sha512-TITQPUkaz+aVk5GL6NhOdwk1aEaNTSDPsGFWrTuhKGtjTF70jL/Oht2W4c6rXUe5fu7Ie19VIahAXHIIiWWNeg==}
@@ -1244,9 +1235,6 @@ packages:
   dotenv@17.4.2:
     resolution: {integrity: sha512-nI4U3TottKAcAD9LLud4Cb7b2QztQMUEfHbvhTH09bqXTxnSie8WnjPALV/WMCrJZ6UV/qHJ6L03OqO3LcdYZw==}
     engines: {node: '>=12'}
-
-  electron-to-chromium@1.5.344:
-    resolution: {integrity: sha512-4MxfbmNDm+KPh066EZy+eUnkcDPcZ35wNmOWzFuh/ijvHsve6kbLTLURy88uCNK5FbpN+yk2nQY6BYh1GEt+wg==}
 
   electron-to-chromium@1.5.417:
     resolution: {integrity: sha512-4T+DTDWuMPM4aHlHwWdAVCVWwp7LDilnhzkj+c/Lbj91XSQrLuOmZSLtS9Q4iIqjlPUbPOnC624zDVVHCHaolQ==}
@@ -1398,8 +1386,8 @@ packages:
   fast-levenshtein@2.0.6:
     resolution: {integrity: sha512-DCXu6Ifhqcks7TZKY3Hxp3y6qphY5SJZmrWMDrKcERSOXWQdMhU9Ig/PYrzyw/ul9jOIyh0N4M0tbC5hodg8dw==}
 
-  fast-uri@3.1.6:
-    resolution: {integrity: sha512-7Ical1vFEMr0onbVzEDIreM22I4khW+fzyQPwvAFWBp1iwdshSZRsL4jjRvPG9JP1uiqMHRto+YU6R2/CzDz5Q==}
+  fast-uri@3.1.8:
+    resolution: {integrity: sha512-GZMtZUTNRpOVIECoXwLNZS5xUGE+mVNbTB8h/7Rwh2TFWcBQiPzTgyZi05BF9UMZKkLJv8XBRJTlU7zg8+ZfMg==}
 
   fastq@1.20.3:
     resolution: {integrity: sha512-XKv5nnLs6nLF71NgiKJLIZFLkPyIEuOselLG7ujZnGrRfQK8HpvY+WqKhAJUAdLomwVHErVS4LfxFlPq0/FTAw==}
@@ -1485,12 +1473,8 @@ packages:
     resolution: {integrity: sha512-EykJT/Q1KjTWctppgIAgfSO0tKVuZUjhgMr17kqTumMl6Afv3EISleU7qZUzoXDFTAHTDC4NOoG/ZxU3EvlMPQ==}
     engines: {node: '>=8'}
 
-  hono@4.13.0:
-    resolution: {integrity: sha512-jhunvfHWxd7J5EFfSgH4xsYJzSe/lfqbUCxiyyeaQasUsXeEHXtzVid+7EOGByc5JnFa23SSFL3Y2RV/z1T+eQ==}
-    engines: {node: '>=16.9.0'}
-
-  hono@4.13.4:
-    resolution: {integrity: sha512-AGEwKIyRMHRv1t8Wjwa3LHxQ61X5CqrdFT+4BRNTpqS5aJNnpl5WLjADb7vFlJzI/8uK7T5QLVApCMQKNa3LgQ==}
+  hono@4.13.9:
+    resolution: {integrity: sha512-7dMkQmZoC4E6F7AtaQSPhlWAdnBti+j7rreMZl8QB4jFiEhP9TWbGWUMi8WYzBCgmgulxuvLQupKqo+Co6Omyg==}
     engines: {node: '>=16.9.0'}
 
   html-escaper@2.0.2:
@@ -1582,8 +1566,8 @@ packages:
     resolution: {integrity: sha512-AC/7JofJvZGrrneWNaEnJeOLUx+JlGt7tNa0wZiRPT4MY1wmfKjt2+6O2p2uz2+skll8OZZmJMNqeke7kKbNgQ==}
     hasBin: true
 
-  jose@6.2.10:
-    resolution: {integrity: sha512-iiW7J9qRFlGxvCOIBDBDxFePQSn7ZMAnrYGhrrOo6siO/MIqwfyilLR27pkfDgUk+raLuzADS8A3S/KLBisc0g==}
+  jose@6.2.12:
+    resolution: {integrity: sha512-9NiFmJEex0sy2Dk58j2UGBSHgUs2ypF9eZSu4L6vjOX3Dp96Sw1F3uL+H+D1sx02jZZdzUT0HgvCy59CuvXcWw==}
 
   jpeg-js@0.4.4:
     resolution: {integrity: sha512-WZzeDOEtTOBK4Mdsar0IqEU5sMr3vSV2RqkAIzUEV2BHnUfKGyswWFPFwK5EeDo93K3FohSHbLAjj0s1Wzd+dg==}
@@ -1907,9 +1891,6 @@ packages:
     resolution: {integrity: sha512-6R9fqJ5Zcmf+uYaFgdIHmLwNldn5HbK8L5ybn7Uz+ylX/rnOsSp1AHcvQSrCaFN+qNM1wpymHqD7mVasEOlHGQ==}
     engines: {node: '>= 4.4.x'}
     hasBin: true
-
-  node-releases@2.0.38:
-    resolution: {integrity: sha512-3qT/88Y3FbH/Kx4szpQQ4HzUbVrHPKTLVpVocKiLfoYvw9XSGOX2FmD2d6DrXbVYyAQTF2HeF6My8jmzx7/CRw==}
 
   node-releases@2.0.54:
     resolution: {integrity: sha512-YHs7BmmcsdAI5Ozuf8JZo6PT0mv2GIWC9vMfvUC3dp65M8hn7Ux8CPL+2oBI7juNuj9d0ndhTcznq2ODBps9cQ==}
@@ -2250,12 +2231,6 @@ packages:
   unrs-resolver@1.11.1:
     resolution: {integrity: sha512-bSjt9pjaEBnNiGgc9rUiHGKv5l4/TGzDmYw3RhnkJGtLhbnnA/5qJj7x3dNDCRx/PJxu774LlH8lCOlB4hEfKg==}
 
-  update-browserslist-db@1.2.3:
-    resolution: {integrity: sha512-Js0m9cx+qOgDxo0eMiFGEueWztz+d4+M3rGlmKPT+T4IS/jP4ylw3Nwpu6cpTTP8R1MAC1kF4VbdLt3ARf209w==}
-    hasBin: true
-    peerDependencies:
-      browserslist: '>= 4.21.0'
-
   update-browserslist-db@1.3.2:
     resolution: {integrity: sha512-UQ+MSxlhRm1bzjhU+DcuXfjFO1FzNtqhK5+9Yvlp90ItDLk5vT932A0rFu619nf7RVS+Y/VeaUW1jaRDqZ8VJw==}
     hasBin: true
@@ -2434,7 +2409,7 @@ snapshots:
 
   '@a2a-js/sdk@1.0.1':
     dependencies:
-      jose: 6.2.10
+      jose: 6.2.12
       uuid: 11.1.1
 
   '@ai-sdk/provider-utils@3.0.30(zod@4.5.4)':
@@ -2553,38 +2528,30 @@ snapshots:
       '@eslint/core': 1.2.1
       levn: 0.4.1
 
-  '@hono/node-server@2.1.1(hono@4.13.0)':
+  '@hono/node-server@2.1.1(hono@4.13.9)':
     dependencies:
-      hono: 4.13.0
+      hono: 4.13.9
 
-  '@hono/node-server@2.1.1(hono@4.13.4)':
+  '@hono/node-ws@1.3.1(@hono/node-server@2.1.1(hono@4.13.9))(hono@4.13.9)':
     dependencies:
-      hono: 4.13.4
-
-  '@hono/node-ws@1.3.1(@hono/node-server@2.1.1(hono@4.13.0))(hono@4.13.0)':
-    dependencies:
-      '@hono/node-server': 2.1.1(hono@4.13.0)
-      hono: 4.13.0
+      '@hono/node-server': 2.1.1(hono@4.13.9)
+      hono: 4.13.9
       ws: 8.21.3
     transitivePeerDependencies:
       - bufferutil
       - utf-8-validate
 
-  '@hono/node-ws@1.3.1(@hono/node-server@2.1.1(hono@4.13.4))(hono@4.13.4)':
+  '@humanfs/core@0.19.2':
     dependencies:
-      '@hono/node-server': 2.1.1(hono@4.13.4)
-      hono: 4.13.4
-      ws: 8.21.3
-    transitivePeerDependencies:
-      - bufferutil
-      - utf-8-validate
+      '@humanfs/types': 0.15.0
 
-  '@humanfs/core@0.19.1': {}
-
-  '@humanfs/node@0.16.7':
+  '@humanfs/node@0.16.8':
     dependencies:
-      '@humanfs/core': 0.19.1
+      '@humanfs/core': 0.19.2
+      '@humanfs/types': 0.15.0
       '@humanwhocodes/retry': 0.4.3
+
+  '@humanfs/types@0.15.0': {}
 
   '@humanwhocodes/module-importer@1.0.1': {}
 
@@ -2715,27 +2682,13 @@ snapshots:
       - utf-8-validate
       - workflow
 
-  '@mastra/hono@1.7.5(@hono/node-server@2.1.1(hono@4.13.0))(@mastra/core@1.63.2(zod@4.5.4))(hono@4.13.0)(zod@4.5.4)':
+  '@mastra/hono@1.7.5(@hono/node-server@2.1.1(hono@4.13.9))(@mastra/core@1.63.2(zod@4.5.4))(hono@4.13.9)(zod@4.5.4)':
     dependencies:
-      '@hono/node-ws': 1.3.1(@hono/node-server@2.1.1(hono@4.13.0))(hono@4.13.0)
+      '@hono/node-ws': 1.3.1(@hono/node-server@2.1.1(hono@4.13.9))(hono@4.13.9)
       '@mastra/core': 1.63.2(zod@4.5.4)
       '@mastra/server': 1.63.2(@mastra/core@1.63.2(zod@4.5.4))(zod@4.5.4)
       fetch-to-node: 2.1.0
-      hono: 4.13.0
-      ws: 8.21.3
-    transitivePeerDependencies:
-      - '@hono/node-server'
-      - bufferutil
-      - utf-8-validate
-      - zod
-
-  '@mastra/hono@1.7.5(@hono/node-server@2.1.1(hono@4.13.4))(@mastra/core@1.63.2(zod@4.5.4))(hono@4.13.4)(zod@4.5.4)':
-    dependencies:
-      '@hono/node-ws': 1.3.1(@hono/node-server@2.1.1(hono@4.13.4))(hono@4.13.4)
-      '@mastra/core': 1.63.2(zod@4.5.4)
-      '@mastra/server': 1.63.2(@mastra/core@1.63.2(zod@4.5.4))(zod@4.5.4)
-      fetch-to-node: 2.1.0
-      hono: 4.13.4
+      hono: 4.13.9
       ws: 8.21.3
     transitivePeerDependencies:
       - '@hono/node-server'
@@ -2775,7 +2728,7 @@ snapshots:
   '@mastra/server@1.63.2(@mastra/core@1.63.2(zod@4.5.4))(zod@4.5.4)':
     dependencies:
       '@mastra/core': 1.63.2(zod@4.5.4)
-      hono: 4.13.4
+      hono: 4.13.9
       zod: 4.5.4
 
   '@modelcontextprotocol/core@2.0.0':
@@ -3279,7 +3232,7 @@ snapshots:
   ajv@8.20.0:
     dependencies:
       fast-deep-equal: 3.1.3
-      fast-uri: 3.1.6
+      fast-uri: 3.1.8
       json-schema-traverse: 1.0.0
       require-from-string: 2.0.2
 
@@ -3303,21 +3256,11 @@ snapshots:
 
   balanced-match@4.0.4: {}
 
-  baseline-browser-mapping@2.10.21: {}
-
   baseline-browser-mapping@2.11.20: {}
 
   brace-expansion@5.0.9:
     dependencies:
       balanced-match: 4.0.4
-
-  browserslist@4.28.2:
-    dependencies:
-      baseline-browser-mapping: 2.10.21
-      caniuse-lite: 1.0.30001790
-      electron-to-chromium: 1.5.344
-      node-releases: 2.0.38
-      update-browserslist-db: 1.2.3(browserslist@4.28.2)
 
   browserslist@4.28.8:
     dependencies:
@@ -3332,8 +3275,6 @@ snapshots:
   builtin-modules@5.1.0: {}
 
   bytes@3.1.2: {}
-
-  caniuse-lite@1.0.30001790: {}
 
   caniuse-lite@1.0.30001810: {}
 
@@ -3371,7 +3312,7 @@ snapshots:
 
   core-js-compat@3.49.0:
     dependencies:
-      browserslist: 4.28.2
+      browserslist: 4.28.8
 
   croner@10.0.1: {}
 
@@ -3414,8 +3355,6 @@ snapshots:
   diff@8.0.4: {}
 
   dotenv@17.4.2: {}
-
-  electron-to-chromium@1.5.344: {}
 
   electron-to-chromium@1.5.417: {}
 
@@ -3532,7 +3471,7 @@ snapshots:
       '@eslint/config-helpers': 0.7.0
       '@eslint/core': 1.2.1
       '@eslint/plugin-kit': 0.7.2
-      '@humanfs/node': 0.16.7
+      '@humanfs/node': 0.16.8
       '@humanwhocodes/module-importer': 1.0.1
       '@humanwhocodes/retry': 0.4.3
       '@types/estree': 1.0.8
@@ -3616,7 +3555,7 @@ snapshots:
 
   fast-levenshtein@2.0.6: {}
 
-  fast-uri@3.1.6: {}
+  fast-uri@3.1.8: {}
 
   fastq@1.20.3:
     dependencies:
@@ -3697,9 +3636,7 @@ snapshots:
 
   has-flag@4.0.0: {}
 
-  hono@4.13.0: {}
-
-  hono@4.13.4: {}
+  hono@4.13.9: {}
 
   html-escaper@2.0.2: {}
 
@@ -3767,7 +3704,7 @@ snapshots:
 
   jiti@2.7.0: {}
 
-  jose@6.2.10: {}
+  jose@6.2.12: {}
 
   jpeg-js@0.4.4: {}
 
@@ -4242,8 +4179,6 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  node-releases@2.0.38: {}
-
   node-releases@2.0.54: {}
 
   npm-run-path@6.0.0:
@@ -4618,12 +4553,6 @@ snapshots:
       '@unrs/resolver-binding-win32-arm64-msvc': 1.11.1
       '@unrs/resolver-binding-win32-ia32-msvc': 1.11.1
       '@unrs/resolver-binding-win32-x64-msvc': 1.11.1
-
-  update-browserslist-db@1.2.3(browserslist@4.28.2):
-    dependencies:
-      browserslist: 4.28.2
-      escalade: 3.2.0
-      picocolors: 1.1.1
 
   update-browserslist-db@1.3.2(browserslist@4.28.8):
     dependencies:
